@@ -59,7 +59,7 @@ Una persona es un usuario y puede tener más de un rol.
 | Frontend | React, Vite, React Router y Context API. Los datos se piden con `fetch`. |
 | Backend | Node.js (versión LTS) y Express 5 |
 | Datos | PostgreSQL (instalado localmente) y Prisma |
-| Validación | Zod, con esquemas compartidos entre la API y la web |
+| Validación | Zod, con esquemas propios en cada proyecto |
 | Autenticación | JWT en una cookie `httpOnly`, con versión de token para invalidar sesiones |
 | Pruebas | Vitest y Supertest |
 | Calidad del código | ESLint y Prettier |
@@ -69,26 +69,22 @@ El detalle técnico está en [docs/arquitectura.md](docs/arquitectura.md). El gl
 
 ### Estructura del repositorio
 
-Es un monorepo organizado con npm workspaces:
+Son dos proyectos independientes (backend y frontend), cada uno con su propio `package.json`, TypeScript, ESLint y Prettier. No hay `package.json` en la raíz ni código compartido.
 
 ```text
 TFI-Portal-UTN/
-├─ apps/
-│  ├─ api/                 Express + Prisma
-│  │  ├─ prisma/           schema.prisma, migraciones y datos de prueba (seed)
-│  │  └─ src/
-│  │     ├─ modules/       auth, users, catalog, enrollments, classroom,
-│  │     │                 grading, attendance, reports
-│  │     └─ shared/        audit, storage, events, errors, dates
-│  └─ web/                 React + Vite
-│     └─ src/
-│        ├─ features/      las mismas áreas que la API
-│        ├─ routes/
-│        └─ shared/        cliente HTTP y sesión
-├─ packages/
-│  └─ shared/              esquemas Zod, tipos y constantes
+├─ backend/                Express + Prisma
+│  ├─ prisma/              schema.prisma, migraciones y datos de prueba (seed)
+│  └─ src/
+│     ├─ modules/          auth, users, catalog, enrollments, classroom,
+│     │                    grading, attendance, reports
+│     └─ shared/           audit, storage, events, errors, dates
+├─ frontend/               React + Vite
+│  └─ src/
+│     ├─ features/         las mismas áreas que la API
+│     ├─ routes/
+│     └─ shared/           cliente HTTP y sesión
 ├─ docs/                   dominio y arquitectura
-├─ .env.example
 └─ .github/                CI y plantillas de issues y de PR
 ```
 
@@ -96,22 +92,36 @@ TFI-Portal-UTN/
 
 ## Cómo empezar
 
-> Todavía no hay código de aplicación. Esta sección se completa en la etapa 0, con los comandos reales.
-
-Requisitos: Node.js LTS, npm y PostgreSQL instalado localmente, en la versión acordada en `.env.example`.
+Requisitos: Node.js LTS, npm y PostgreSQL instalado localmente.
 
 1. Crear en PostgreSQL dos bases: una de desarrollo y otra de pruebas. Por ejemplo, `utn_connect` y `utn_connect_test`.
-2. Seguir estos pasos:
+2. Clonar el repositorio:
 
 ```bash
 git clone https://github.com/rjoacog/TFI-Portal-UTN.git
 cd TFI-Portal-UTN
-cp .env.example .env          # completar DATABASE_URL y DATABASE_URL_TEST
+```
+
+3. Levantar el backend (API), desde `backend/`:
+
+```bash
+cd backend
 npm install
+# crear backend/.env con DATABASE_URL (y DATABASE_URL_TEST para las pruebas)
 npm run db:migrate            # aplica las migraciones
 npm run db:seed               # primer administrador y datos de prueba
-npm run dev                   # levanta la API y la web
+npm run dev                   # levanta la API
 ```
+
+4. Levantar el frontend (web), desde `frontend/`, en otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev                   # levanta la web
+```
+
+Cada proyecto también tiene `npm run lint`, `npm run typecheck` y `npm run test`. Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](frontend/README.md).
 
 ---
 
@@ -145,7 +155,7 @@ npm run dev                   # levanta la API y la web
 
 | Etapa | Contenido | Demostración |
 |---|---|---|
-| E0 | Fundaciones: monorepo, base de datos, autenticación base, auditoría, archivos y CI | — |
+| E0 | Fundaciones: proyectos backend y frontend, base de datos, autenticación base, auditoría, archivos y CI | — |
 | E1 | Acceso y usuarios | — |
 | E2 | Oferta: carreras, materias, períodos y comisiones | — |
 | E3 | Inscripción | **D1** |

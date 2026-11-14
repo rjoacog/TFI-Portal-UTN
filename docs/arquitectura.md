@@ -8,7 +8,7 @@
 | Frontend | React + Vite + React Router + Context API. Los datos se piden con `fetch`, a través de un cliente propio. |
 | Backend | Node.js (versión LTS) + Express 5 |
 | Datos | PostgreSQL (instalado en cada máquina) + Prisma |
-| Validación | Zod, con esquemas compartidos en `packages/shared` |
+| Validación | Zod, con esquemas propios en cada proyecto (`backend/` y `frontend/`) |
 | Contraseñas | argon2 |
 | Seguridad HTTP | helmet, express-rate-limit y cors con una lista explícita de orígenes permitidos |
 | Archivos | multer para recibirlos; file-type para validar el tipo real |
@@ -22,18 +22,19 @@
 ## Estructura del repositorio
 
 ```text
-apps/api/src/
+backend/src/
   modules/<area>/       routes, service, repository y schemas de cada módulo
   shared/               audit, storage, events, errors, dates, auth (middlewares)
   app.ts
-apps/api/prisma/        schema.prisma, migrations/, seed.ts
-apps/web/src/
+backend/prisma/         schema.prisma, migrations/, seed.ts
+frontend/src/
   features/<area>/      pantallas y componentes de cada área
   routes/
   shared/api/           cliente HTTP (envoltorio de fetch)
   shared/session/       contexto de sesión
-packages/shared/src/    esquemas Zod, tipos y constantes
 ```
+
+Son dos proyectos independientes: cada uno define sus propios esquemas Zod, tipos y constantes, y no hay paquete compartido.
 
 ## Autenticación y sesión
 
