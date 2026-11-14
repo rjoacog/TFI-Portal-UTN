@@ -13,7 +13,26 @@ cd backend
 npm install
 ```
 
-La conexión a la base se configura con la variable `DATABASE_URL`. Copiá `.env.example` como `.env` en esta carpeta (no se sube al repositorio) y completá tu usuario y contraseña. La base `utn_connect` se crea como se explica en el [README principal](../README.md#cómo-empezar).
+Copiá `.env.example` como `.env` en esta carpeta (no se sube al repositorio) y completá tu usuario y contraseña en `DATABASE_URL`. La base `utn_connect` se crea como se explica en el [README principal](../README.md#cómo-empezar).
+
+## Variables de entorno
+
+La API las valida con Zod al iniciar (`src/shared/config/env.ts`). Si falta alguna o es inválida, no arranca y muestra cuál falló. Las variables definidas en el entorno tienen prioridad sobre las de `.env`.
+
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `NODE_ENV` | Sí | `development`, `test` o `production`. |
+| `PORT` | No | Puerto de la API. Por defecto, `3000`. |
+| `DATABASE_URL` | Sí | Conexión a PostgreSQL (`postgresql://...`). |
+| `CORS_ORIGINS` | Sí | Orígenes permitidos, separados por comas, sin ruta ni barra final. En desarrollo, `http://localhost:5173`. |
+
+## Errores
+
+Todas las respuestas de error usan el formato común, descripto en [docs/arquitectura.md](../docs/arquitectura.md#formato-común-de-errores). Desde un servicio o una ruta se lanza un `AppError` (de `src/shared/errors`), y el middleware de errores arma la respuesta.
+
+```ts
+throw new AppError(404, 'NOT_FOUND', 'La comisión no existe');
+```
 
 ## Scripts
 
