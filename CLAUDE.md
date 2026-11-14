@@ -33,7 +33,7 @@ npm run db:migrate   # aplica las migraciones (prisma migrate dev)
 npm run db:seed      # crea el primer administrador y carga datos de prueba
 
 # frontend/
-npm run dev          # levanta la web
+npm run dev          # levanta la web (necesita la API en el puerto 3000: proxy de Vite)
 npm run test         # ejecuta las pruebas (Vitest)
 npm run lint         # revisa el estilo del código (ESLint)
 npm run typecheck    # verifica los tipos (tsc --noEmit)

@@ -1,0 +1,30 @@
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-layout__header {
+  background: var(--color-primary);
+  padding: var(--space-3) var(--space-4);
+}
+
+.app-layout__brand {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-surface);
+  text-decoration: none;
+}
+
+.app-layout__brand:hover {
+  color: var(--color-surface);
+}
+
+.app-layout__brand-accent {
+  color: var(--color-accent);
+}
+
+.app-layout__content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
