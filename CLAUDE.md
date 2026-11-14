@@ -19,35 +19,45 @@ Leer el archivo que corresponda **antes** de trabajar en el área:
 
 ## Comandos
 
-> Se definen en la etapa 0. Hay que actualizar esta sección cada vez que se agregue o cambie un script.
+> Hay que actualizar esta sección cada vez que se agregue o cambie un script.
+
+No hay `package.json` en la raíz: cada proyecto se instala y se ejecuta por separado, desde su carpeta (`npm install` la primera vez).
 
 ```bash
-npm run dev          # levanta la API y la web
+# backend/
+npm run dev          # levanta la API
 npm run test         # ejecuta las pruebas (Vitest)
 npm run lint         # revisa el estilo del código (ESLint)
 npm run typecheck    # verifica los tipos (tsc --noEmit)
 npm run db:migrate   # aplica las migraciones (prisma migrate dev)
 npm run db:seed      # crea el primer administrador y carga datos de prueba
+
+# frontend/
+npm run dev          # levanta la web
+npm run test         # ejecuta las pruebas (Vitest)
+npm run lint         # revisa el estilo del código (ESLint)
+npm run typecheck    # verifica los tipos (tsc --noEmit)
 ```
 
-PostgreSQL corre instalado en cada máquina, sin Docker. La conexión se configura en `.env`.
+PostgreSQL corre instalado en cada máquina, sin Docker. La conexión se configura en `backend/.env`.
 
 Antes de dar una tarea por terminada, tienen que pasar `lint`, `typecheck` y `test`.
 
 ## Arquitectura
 
-Es un monorepo con npm workspaces:
-- `apps/api`: Express 5 y Prisma;
-- `apps/web`: React, Vite y React Router;
-- `packages/shared`: esquemas Zod, tipos y constantes.
+Son dos proyectos independientes, sin configuración ni paquetes compartidos:
+- `backend/`: Express 5 y Prisma;
+- `frontend/`: React, Vite y React Router.
 
-**En la API**, cada módulo de `src/modules/<area>` tiene tres capas:
+Cada uno tiene su propio `package.json`, `tsconfig.json`, ESLint y Prettier, y define sus propios esquemas Zod, tipos y constantes.
+
+**En la API**, cada módulo de `backend/src/modules/<area>` tiene tres capas:
 - **rutas**: validan la entrada con Zod y llaman al servicio, sin lógica de negocio;
 - **servicios**: contienen **todas** las reglas de negocio;
 - **repositorios**: hacen las consultas con Prisma.
 
 **En la web**:
-- las llamadas a la API pasan **siempre** por el cliente de `src/shared/api` (un envoltorio de `fetch`), nunca por `fetch` directo;
+- las llamadas a la API pasan **siempre** por el cliente de `frontend/src/shared/api` (un envoltorio de `fetch`), nunca por `fetch` directo;
 - Context API se usa solo para la sesión.
 
 ## Reglas obligatorias

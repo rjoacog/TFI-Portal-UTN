@@ -1,0 +1,27 @@
+# Dependencias
+node_modules/
+
+# Compilados
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Variables de entorno y credenciales
+.env
+.env.*
+!.env.example
+
+# Archivos subidos en desarrollo
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editores y sistema operativo
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
