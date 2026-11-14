@@ -1,191 +1,170 @@
-# Portal Universitario UTN
+# UTN Connect
 
-Portal web para que **alumnos** y **profesores** consulten información académica y gestionen el cursado: materias, asistencia, condición del alumno y material de cátedra.
+Aula virtual y gestión de cursado para las tecnicaturas de la UTN (sede Concepción). Trabajo Final Integrador.
 
-Este documento es el punto de partida del TFI. Define el alcance inicial, los roles, el MVP y cómo vamos a construir la primera versión.
-
----
-
-## Visión
-
-Centralizar en un solo lugar la información que hoy suele estar repartida entre planillas, aulas virtuales y avisos sueltos:
-
-- El alumno entra y ve qué cursa, su asistencia, su condición y el material de cada materia.
-- El profesor carga asistencia, publica material y consulta el estado de sus cursos.
-- Más adelante, un administrador académico podrá dar de alta usuarios, materias y períodos lectivos.
+El sistema reúne en un solo lugar:
+- la oferta de comisiones y la inscripción;
+- el material y los anuncios de cada comisión;
+- los trabajos prácticos, sus entregas y las calificaciones;
+- la asistencia y el historial académico del alumno.
 
 ---
-
-
 
 ## Roles
 
+Una persona es un usuario y puede tener más de un rol.
 
-| Rol               | Qué puede hacer (MVP)                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------- |
-| **Alumno**        | Iniciar sesión, ver sus materias, asistencia, condición académica y descargar material.           |
-| **Profesor**      | Iniciar sesión, ver sus cursos, cargar asistencia, publicar/editar material e informar condición. |
-| **Administrador** | (Fase 2) Gestionar usuarios, materias, comisiones y calendario académico.                         |
-
-
-En el MVP el administrador puede resolverse de forma simple (usuario semilla o scripts) para no frenar el desarrollo.
+| Rol | Qué hace en el MVP |
+|---|---|
+| **Alumno** | Se inscribe a las comisiones de sus carreras y se da de baja. Entra al aula, entrega trabajos prácticos y consulta sus notas, su asistencia y su historial. |
+| **Docente** | Opera las comisiones que tiene asignadas: publica material y anuncios, crea actividades, califica, define la nota de aprobación y toma asistencia. |
+| **Administrador** | Da de alta usuarios (con una contraseña temporal) y administra roles, carreras, materias, períodos, comisiones, bajas y reactivaciones de inscripciones, y parámetros. |
+| **Directivo** | El rol existe, pero sus pantallas quedan para después del MVP. |
 
 ---
-
-
 
 ## Alcance del MVP
 
-Objetivo: una primera versión usable, con autenticación y las 4 funciones núcleo.
+**Incluye**
+- **Acceso:** inicio de sesión con legajo y contraseña, cambio obligatorio de la contraseña en el primer ingreso, cierre de sesión y edición del perfil.
+- **Administración:** usuarios, roles y carreras del alumno; carreras, materias, períodos lectivos y comisiones; configuración.
+- **Inscripción:** el alumno se inscribe y la inscripción queda activa al instante. Puede darse de baja. Volver a una comisión después de una baja lo hace el administrador.
+- **Aula:** material, anuncios, actividades (trabajos prácticos y evaluaciones) y entregas.
+- **Evaluación:**
+  - notas enteras de 1 a 10;
+  - nota de aprobación definida por comisión;
+  - planilla de la comisión, que cruza alumnos con actividades;
+  - rectificación de una nota, que queda en la auditoría.
+- **Asistencia:** registro por clase, con el porcentaje calculado de forma automática.
+- **Historial académico** del alumno.
+- **Auditoría** de los cambios sensibles.
+- **Reportes con exportación** (PDF, Excel o CSV). Es un requisito de la cátedra y su alcance está por definirse.
 
-1. **Autenticación** — login por email/legajo y contraseña, sesión por rol.
-2. **Cursado** — listado de materias/comisiones del período actual.
-3. **Asistencia** — el profesor registra presentes/ausentes; el alumno consulta su porcentaje.
-4. **Condición del alumno** — regular, libre, promocional u otra definida por la cátedra.
-5. **Material** — el profesor sube archivos o enlaces; el alumno los consulta por materia.
-
-Queda **fuera del MVP** (se anota para después):
-
-- Inscripción a materias y actas de examen
-- Calificaciones detalladas / actas
-- Mensajería interna y notificaciones push
-- App mobile nativa
-- Integración con sistemas reales de la facultad (Sysacad, campus, etc.)
-
----
-
-
-
-## Modelo de dominio (simplificado)
-
-```
-Usuario (alumno | profesor | admin)
-  └── Comisión (materia + docente + período)
-        ├── Inscripción (alumno en esa comisión)
-        ├── Asistencia (fecha + estado)
-        ├── Condición (estado académico del alumno)
-        └── Material (archivo o enlace publicado por el docente)
-```
-
-Reglas iniciales:
-
-- Un usuario tiene un único rol en el MVP.
-- Un profesor puede dictar varias comisiones.
-- Un alumno puede estar inscripto en varias comisiones.
-- La condición y la asistencia viven a nivel **alumno + comisión**.
+**Queda para después**
+- Consultas a los docentes en horario de consulta.
+- Notificaciones dentro de la plataforma y por correo.
+- Recuperación de la contraseña por cuenta propia. Mientras tanto, el administrador la restablece.
+- Aprobación de inscripciones (estados pendiente y rechazada), cupos y correlativas.
+- Materias compartidas entre carreras (cuando se incorporen las ingenierías).
+- Condición del alumno en la materia (regular, libre o promocional).
+- Nota final de la materia, mensajería, foros y aplicación móvil nativa.
 
 ---
 
+## Stack
 
+| Capa | Tecnología |
+|---|---|
+| Lenguaje | TypeScript, en modo `strict` |
+| Frontend | React, Vite, React Router y Context API. Los datos se piden con `fetch`. |
+| Backend | Node.js (versión LTS) y Express 5 |
+| Datos | PostgreSQL (instalado localmente) y Prisma |
+| Validación | Zod, con esquemas compartidos entre la API y la web |
+| Autenticación | JWT en una cookie `httpOnly`, con versión de token para invalidar sesiones |
+| Pruebas | Vitest y Supertest |
+| Calidad del código | ESLint y Prettier |
+| Integración continua | GitHub Actions |
 
-## Stack propuesto (A REVISAR)
+El detalle técnico está en [docs/arquitectura.md](docs/arquitectura.md). El glosario y las reglas de negocio están en [docs/dominio.md](docs/dominio.md).
 
-Elegimos un stack web moderno, con TypeScript de punta a punta, para ir rápido y mantener el código ordenado.
+### Estructura del repositorio
 
-
-| Capa     | Tecnología                                               | Para qué                        |
-| -------- | -------------------------------------------------------- | ------------------------------- |
-| App      | [Next.js](https://nextjs.org/) (App Router) + TypeScript | Frontend y API en el mismo repo |
-| Estilos  | Tailwind CSS                                             | UI rápida y consistente         |
-| Datos    | PostgreSQL + [Prisma](https://www.prisma.io/)            | Persistencia y migraciones      |
-| Auth     | NextAuth / Auth.js                                       | Sesión y control por rol        |
-| Archivos | Storage local (MVP) / S3-compatible después              | Material de cátedra             |
-
-
-Alternativas válidas si el equipo prefiere otro camino: backend NestJS o Spring Boot, y frontend React separado. El README se ajusta cuando se confirme.
-
----
-
-
-
-## Estructura prevista del repo
-
-Monorepo simple (un solo proyecto Next.js para empezar):
+Es un monorepo organizado con npm workspaces:
 
 ```text
 TFI-Portal-UTN/
-├── README.md
-├── prisma/
-│   └── schema.prisma
-├── public/
-├── src/
-│   ├── app/                 # rutas y páginas
-│   │   ├── (auth)/          # login
-│   │   ├── (alumno)/        # vistas del alumno
-│   │   ├── (profesor)/      # vistas del profesor
-│   │   └── api/             # endpoints
-│   ├── components/
-│   ├── lib/                 # prisma, auth, utilidades
-│   └── types/
-└── ...
+├─ apps/
+│  ├─ api/                 Express + Prisma
+│  │  ├─ prisma/           schema.prisma, migraciones y datos de prueba (seed)
+│  │  └─ src/
+│  │     ├─ modules/       auth, users, catalog, enrollments, classroom,
+│  │     │                 grading, attendance, reports
+│  │     └─ shared/        audit, storage, events, errors, dates
+│  └─ web/                 React + Vite
+│     └─ src/
+│        ├─ features/      las mismas áreas que la API
+│        ├─ routes/
+│        └─ shared/        cliente HTTP y sesión
+├─ packages/
+│  └─ shared/              esquemas Zod, tipos y constantes
+├─ docs/                   dominio y arquitectura
+├─ .env.example
+└─ .github/                CI y plantillas de issues y de PR
 ```
 
 ---
 
+## Cómo empezar
 
+> Todavía no hay código de aplicación. Esta sección se completa en la etapa 0, con los comandos reales.
 
-## Cómo empezar (cuando exista el código)
+Requisitos: Node.js LTS, npm y PostgreSQL instalado localmente, en la versión acordada en `.env.example`.
 
-Requisitos: Node.js 20+, npm o pnpm, y PostgreSQL.
+1. Crear en PostgreSQL dos bases: una de desarrollo y otra de pruebas. Por ejemplo, `utn_connect` y `utn_connect_test`.
+2. Seguir estos pasos:
 
 ```bash
-git clone <url-del-repo>
+git clone https://github.com/rjoacog/TFI-Portal-UTN.git
 cd TFI-Portal-UTN
-cp .env.example .env
+cp .env.example .env          # completar DATABASE_URL y DATABASE_URL_TEST
 npm install
-npx prisma migrate dev
-npm run dev
+npm run db:migrate            # aplica las migraciones
+npm run db:seed               # primer administrador y datos de prueba
+npm run dev                   # levanta la API y la web
 ```
 
-La app va a quedar en `http://localhost:3000`.
-
-> El scaffolding del proyecto (Next.js, Prisma, login) es el siguiente paso de implementación. Este README deja el mapa; todavía no hay código de aplicación.
-
 ---
 
+## Cómo trabajamos
 
+- **Issues:** cada tarea es un issue. Las funcionalidades son un issue por caso de uso, con sus criterios de aceptación como lista para tildar. Los issues se crean por etapas, a medida que se avanza.
+- **Etiquetas:**
+  - `etapa:E0` … `etapa:E7`;
+  - `tipo:funcionalidad`, `tipo:tecnico`, `tipo:bug`, `tipo:docs`;
+  - `area:api`, `area:web`, `area:db`;
+  - `bloqueado` y `pendiente-consulta`.
+- **Hitos:**
+  - `D1 – Usuarios e inscripción`;
+  - `D2 – Recorrido completo del TP`;
+  - `D3 – MVP completo`.
+- **Ramas:**
+  - `main` solo recibe cambios por pull request (PR);
+  - hay una rama por issue, con el formato `type/number-short-description`. Por ejemplo, `feat/17-enrollment` o `fix/42-due-date`.
+- **Idioma:**
+  - en inglés: el código y los mensajes de commit;
+  - en español: la documentación, los issues, los PR, los comentarios en el código y los textos que ve el usuario.
+- **Commits:** siguen [Conventional Commits](https://www.conventionalcommits.org/es/), en inglés. Por ejemplo, `feat(enrollments): enforce single active enrollment per subject`.
+- **Pull requests:**
+  - mencionan su issue con `Closes #N`;
+  - quien lo abre puede fusionarlo, una vez que la CI esté en verde y se cumpla la lista de "terminado" de la plantilla;
+  - pedir una revisión es opcional, pero recomendable si el cambio toca autenticación, permisos o migraciones;
+  - se fusionan con *squash and merge*.
+- **Secretos:** nunca se suben al repositorio el `.env` ni ninguna credencial.
 
-## Roadmap corto
+### Etapas
 
-
-| Fase | Entrega                            | Estado    |
-| ---- | ---------------------------------- | --------- |
-| 0    | README, alcance y stack            | En curso  |
-| 1    | Scaffold + auth + roles            | Pendiente |
-| 2    | Materias / comisiones + dashboards | Pendiente |
-| 3    | Asistencia y condición             | Pendiente |
-| 4    | Carga y consulta de material       | Pendiente |
-| 5    | Pulido, validaciones y demo TFI    | Pendiente |
-
+| Etapa | Contenido | Demostración |
+|---|---|---|
+| E0 | Fundaciones: monorepo, base de datos, autenticación base, auditoría, archivos y CI | — |
+| E1 | Acceso y usuarios | — |
+| E2 | Oferta: carreras, materias, períodos y comisiones | — |
+| E3 | Inscripción | **D1** |
+| E4 | Contenido del aula: material y anuncios | — |
+| E5 | Actividades y entregas | — |
+| E6 | Evaluación: planilla, calificación y nota de aprobación | **D2** |
+| E7 | Asistencia e historial | **D3** (junto con los reportes) |
 
 ---
-
-
 
 ## Decisiones abiertas
 
-Para no bloquear el arranque, estas se pueden cerrar en la próxima reunión:
-
-- ¿Legajo, DNI o email como identificador de login?
-- ¿La condición la carga el profesor a mano o se calcula (asistencia + notas)?
-- ¿El material son solo PDFs/enlaces, o también avisos de texto?
-- ¿Usamos un único período lectivo en el MVP o ya modelamos ciclos (1° / 2° cuatrimestre)?
+- **Identificador de acceso de docentes y administradores:** ¿también es el legajo? ¿Qué pasa si una persona tiene legajo de alumno y legajo docente? Hay que consultarlo con los docentes.
+- **Materias compartidas:** ¿las tecnicaturas comparten alguna materia, como Inglés o Matemática?
+- **Reportes obligatorios:** qué se exporta, en qué formato y para quién. Hay que consultarlo con la cátedra.
+- **Publicación:** todavía no se publica en ningún servidor. Cuando se haga, el frontend y la API tienen que quedar bajo el mismo dominio, para que viaje la cookie de sesión.
 
 ---
-
-
-
-## Equipo y convenciones
-
-- Este es el Trabajo Final Integrador del portal universitario.
-- Commits en español o inglés, pero consistentes. Mensajes cortos que expliquen el *por qué*.
-- Una funcionalidad por PR / entrega cuando el repo ya tenga ramas de trabajo.
-- No commitear `.env` ni credenciales.
-
----
-
-
 
 ## Licencia
 
-Uso académico. A definir por el equipo del TFI.
+Uso académico. La define el equipo del TFI.
