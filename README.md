@@ -58,7 +58,7 @@ Una persona es un usuario y puede tener más de un rol.
 | Lenguaje | TypeScript, en modo `strict` |
 | Frontend | React, Vite, React Router y Context API. Los datos se piden con `fetch`. |
 | Backend | Node.js (versión LTS) y Express 5 |
-| Datos | PostgreSQL (instalado localmente) y Prisma |
+| Datos | PostgreSQL 18 (instalado localmente) y Prisma |
 | Validación | Zod, con esquemas propios en cada proyecto |
 | Autenticación | JWT en una cookie `httpOnly`, con versión de token para invalidar sesiones |
 | Pruebas | Vitest y Supertest |
@@ -92,9 +92,19 @@ TFI-Portal-UTN/
 
 ## Cómo empezar
 
-Requisitos: Node.js LTS, npm y PostgreSQL instalado localmente.
+Requisitos: Node.js LTS, npm y **PostgreSQL 18** instalado localmente. Todo el equipo usa la misma versión mayor (18), para que las migraciones se comporten igual en todas las máquinas.
 
-1. Crear en PostgreSQL dos bases: una de desarrollo y otra de pruebas. Por ejemplo, `utn_connect` y `utn_connect_test`.
+1. Crear la base de desarrollo `utn_connect` (y, para las pruebas, `utn_connect_test`). Con `psql`:
+
+```bash
+psql -U postgres -c "CREATE DATABASE utn_connect;"
+psql -U postgres -c "CREATE DATABASE utn_connect_test;"
+# para comprobar la conexión:
+psql -U postgres -d utn_connect -c "SELECT version();"
+```
+
+   `postgres` es el usuario administrador que se crea al instalar PostgreSQL; si usás otro, reemplazalo.
+
 2. Clonar el repositorio:
 
 ```bash
@@ -107,7 +117,7 @@ cd TFI-Portal-UTN
 ```bash
 cd backend
 npm install
-# crear backend/.env con DATABASE_URL (y DATABASE_URL_TEST para las pruebas)
+cp .env.example .env          # y completar usuario y contraseña en DATABASE_URL
 npm run db:migrate            # aplica las migraciones
 npm run db:seed               # primer administrador y datos de prueba
 npm run dev                   # levanta la API

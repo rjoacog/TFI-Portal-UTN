@@ -4,7 +4,7 @@ API hecha con Node.js, Express 5 y Prisma sobre PostgreSQL. Es un proyecto indep
 
 ## Requisitos
 
-Node.js LTS, npm y PostgreSQL instalado localmente.
+Node.js LTS, npm y PostgreSQL 18 instalado localmente.
 
 ## Puesta en marcha
 
@@ -13,7 +13,7 @@ cd backend
 npm install
 ```
 
-La conexión a la base se configura con la variable `DATABASE_URL` (archivo `.env` en esta carpeta, que no se sube al repositorio).
+La conexión a la base se configura con la variable `DATABASE_URL`. Copiá `.env.example` como `.env` en esta carpeta (no se sube al repositorio) y completá tu usuario y contraseña. La base `utn_connect` se crea como se explica en el [README principal](../README.md#cómo-empezar).
 
 ## Scripts
 
