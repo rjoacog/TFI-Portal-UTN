@@ -1,3 +1,13 @@
+import { BrowserRouter } from 'react-router';
+import { AppRoutes } from './routes/AppRoutes';
+import { SessionProvider } from './shared/session';
+
 export function App() {
-  return <h1>UTN Connect</h1>;
+  return (
+    <BrowserRouter>
+      <SessionProvider>
+        <AppRoutes />
+      </SessionProvider>
+    </BrowserRouter>
+  );
 }

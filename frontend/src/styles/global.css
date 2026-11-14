@@ -1,0 +1,64 @@
+/* CSS global: variables de diseño y estilos base. Se importa una sola vez, desde main.tsx.
+   Los componentes usan estas variables y no escriben colores ni tipografías a mano. */
+
+:root {
+  /* Colores */
+  --color-primary: #003b70;
+  --color-primary-dark: #002a52;
+  --color-accent: #f58220;
+  --color-accent-dark: #8a4a00;
+  --color-text: #263445;
+  --color-text-secondary: #5a6678;
+  --color-background: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-border: #dde1e7;
+  --color-error: #a11d24;
+  --color-error-bg: #fbe7e8;
+  --color-success: #1b6b3e;
+  --color-success-bg: #e3f3e9;
+
+  /* Tipografías */
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+
+  /* Espacios */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radios */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-background);
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+a:hover {
+  color: var(--color-primary-dark);
+}
