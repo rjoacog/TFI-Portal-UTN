@@ -51,6 +51,38 @@ Son dos proyectos independientes: cada uno define sus propios esquemas Zod, tipo
 - **Desarrollo:** la web llama a la API a través del proxy de Vite, así quedan en el mismo origen.
 - **Producción:** la web y la API tienen que quedar bajo el mismo dominio o bajo subdominios del mismo dominio. Si no, la cookie no viaja.
 
+## Formato común de errores
+
+Toda respuesta de error de la API tiene este cuerpo:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Los datos enviados no son válidos",
+    "details": [{ "path": "loginId", "message": "Entrada inválida: se esperaba texto, recibido indefinido" }]
+  }
+}
+```
+
+- `code`: identificador estable, en inglés y en mayúsculas. La web decide qué hacer según este campo, no según el texto.
+- `message`: texto en español para mostrarle al usuario.
+- `details`: opcional. En los errores de validación, la lista de campos con su problema.
+
+Los servicios y las rutas lanzan `AppError(status, code, message)` de `backend/src/shared/errors`. El middleware de errores lo traduce así:
+
+| Caso | HTTP | `code` |
+|---|---|---|
+| `AppError` | el suyo | el suyo |
+| `ZodError` (validación de la entrada) | 400 | `VALIDATION_ERROR` |
+| Cuerpo que no es un JSON válido | 400 | `INVALID_JSON` |
+| Cuerpo demasiado grande | 413 | `PAYLOAD_TOO_LARGE` |
+| Ruta inexistente | 404 | `NOT_FOUND` |
+| Límite global de pedidos superado | 429 | `TOO_MANY_REQUESTS` |
+| Cualquier otro error | 500 | `INTERNAL_ERROR` (se registra en el log; al cliente no se le expone el detalle) |
+
+Los mensajes de validación de Zod se muestran en español (`z.config(z.locales.es())`).
+
 ## Cliente HTTP de la web
 
 `src/shared/api` envuelve `fetch` y es el único lugar desde donde se llama a la API:
