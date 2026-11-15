@@ -2,20 +2,26 @@
    Los componentes usan estas variables y no escriben colores ni tipografías a mano. */
 
 :root {
-  /* Colores */
-  --color-primary: #003b70;
-  --color-primary-dark: #002a52;
-  --color-accent: #f58220;
-  --color-accent-dark: #8a4a00;
-  --color-text: #263445;
-  --color-text-secondary: #5a6678;
-  --color-background: #f4f5f7;
+  /* Colores. Todo parte del naranja principal (#f58220); los neutros son cálidos para que combinen.
+     El naranja no da contraste con texto blanco: los botones sobre él llevan texto oscuro, y el
+     texto o los vínculos naranja sobre fondo claro usan --color-primary-deep. */
+  --color-primary: #f58220;
+  --color-primary-dark: #d96a0b; /* hover y estados activos */
+  --color-primary-deep: #9a4a00; /* texto y vínculos sobre fondo claro (contraste AA) */
+  --color-primary-soft: #feebd9; /* fondos suaves */
+  --color-brand-dark: #2b2420; /* cabecera y superficies oscuras */
+  --color-brand-dark-text: #f3e9df; /* texto sobre --color-brand-dark */
+  --color-text: #2b2420;
+  --color-text-secondary: #6b5f55;
+  --color-background: #fbf8f4;
   --color-surface: #ffffff;
-  --color-border: #dde1e7;
+  --color-border: #e8e0d6;
+  --color-border-strong: #c9bdb0;
   --color-error: #a11d24;
   --color-error-bg: #fbe7e8;
   --color-success: #1b6b3e;
   --color-success-bg: #e3f3e9;
+  --color-focus: #2b2420;
 
   /* Tipografías */
   --font-body: 'Inter', system-ui, sans-serif;
@@ -32,6 +38,7 @@
   /* Radios */
   --radius-sm: 6px;
   --radius-md: 10px;
+  --radius-lg: 14px;
 }
 
 *,
@@ -52,13 +59,41 @@ h1,
 h2,
 h3 {
   font-family: var(--font-heading);
-  color: var(--color-primary);
+  color: var(--color-text);
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--color-primary-deep);
 }
 
 a:hover {
   color: var(--color-primary-dark);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Botón principal: naranja con texto oscuro (el blanco no alcanza contraste). */
+.button {
+  min-height: 44px;
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.button:disabled {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
 }

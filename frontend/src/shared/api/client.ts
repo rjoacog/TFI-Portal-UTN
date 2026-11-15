@@ -16,6 +16,22 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): () 
   };
 }
 
+let passwordChangeHandler: UnauthorizedHandler | null = null;
+
+/**
+ * Registra qué hacer ante un 403 `PASSWORD_CHANGE_REQUIRED` (el usuario tiene que cambiar la
+ * contraseña antes de seguir). Igual que el de 401, lo registra el proveedor de sesión.
+ */
+export function setPasswordChangeHandler(handler: UnauthorizedHandler | null): () => void {
+  passwordChangeHandler = handler;
+  return () => {
+    if (passwordChangeHandler === handler) passwordChangeHandler = null;
+  };
+}
+
+/** El 401 del inicio de sesión es un error de credenciales, no una sesión vencida. */
+const LOGIN_PATH = '/api/auth/login';
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
@@ -82,8 +98,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!res.ok) {
-    if (res.status === 401) unauthorizedHandler?.();
-    throw toApiError(res.status, payload);
+    const error = toApiError(res.status, payload);
+    if (res.status === 401 && path !== LOGIN_PATH) unauthorizedHandler?.();
+    if (res.status === 403 && error.code === 'PASSWORD_CHANGE_REQUIRED') passwordChangeHandler?.();
+    throw error;
   }
 
   return payload as T;

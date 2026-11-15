@@ -102,8 +102,8 @@ Los mensajes de validación de Zod se muestran en español (`z.config(z.locales.
 `src/shared/api` envuelve `fetch` y es el único lugar desde donde se llama a la API:
 - envía `credentials: 'include'`;
 - serializa el JSON y lee el formato común de errores;
-- ante un `401` limpia la sesión y redirige al inicio de sesión;
-- ante un `403` con `mustChangePassword` redirige al cambio de contraseña.
+- ante un `401` llama al manejador registrable (`setUnauthorizedHandler`): el proveedor de sesión limpia la sesión y `RequireAuth` redirige a `/login`, recordando la ruta pedida. **Excepción:** el `401` de `POST /api/auth/login` no lo dispara, porque es un error de credenciales y no una sesión vencida: lo muestra el formulario;
+- ante un `403` con código `PASSWORD_CHANGE_REQUIRED` llama al manejador registrable (`setPasswordChangeHandler`): el proveedor de sesión marca `mustChangePassword` y redirige a `/change-password`.
 
 Para no repetir el manejo de carga y de errores en cada pantalla, se puede sumar un hook propio (`useApiQuery`) sobre este cliente. **No se agregan librerías de manejo de datos.**
 

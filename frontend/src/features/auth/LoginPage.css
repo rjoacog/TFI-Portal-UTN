@@ -1,0 +1,136 @@
+.login {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+
+/* Panel de marca (izquierda): naranja principal con texto oscuro, que es el que da contraste. */
+.login__brand {
+  flex: 1 1 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 56px;
+  background: var(--color-primary);
+  color: var(--color-text);
+}
+
+.login__logo {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.login__pitch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 420px;
+}
+
+.login__pitch-title {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+.login__pitch-text {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.login__campus {
+  font-size: 14px;
+}
+
+.login__panel {
+  flex: 999 1 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px var(--space-6);
+}
+
+.login__form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 36px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+}
+
+.login__title {
+  margin: 0;
+  font-size: 28px;
+}
+
+.login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login__field input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.login__error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  font-size: 14px;
+}
+
+.login__form .button {
+  min-height: 46px;
+}
+
+.login__help {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 600px) {
+  .login__brand {
+    flex-basis: auto;
+    padding: var(--space-6);
+    gap: var(--space-4);
+  }
+
+  .login__pitch-title {
+    font-size: 28px;
+  }
+
+  .login__pitch-text,
+  .login__campus {
+    display: none;
+  }
+
+  .login__panel {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .login__form {
+    padding: var(--space-6);
+  }
+}
