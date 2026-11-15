@@ -9,7 +9,7 @@ import {
 import { AppError } from '../../shared/errors/index.js';
 import { normalizeLegajo } from '../../shared/identity/index.js';
 import { z } from '../../shared/validation/index.js';
-import { getCurrentUser, login, logout } from './auth.service.js';
+import { changePassword, getCurrentUser, login, logout } from './auth.service.js';
 
 /** Límite de intentos fallidos de inicio de sesión (decisión E1-1). */
 export interface LoginRateLimit {
@@ -30,6 +30,17 @@ const loginSchema = z.object({
   loginId: z.string().min(1),
   password: z.string().min(1),
 });
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(1),
+    newPasswordConfirmation: z.string().min(1),
+  })
+  .refine((v) => v.newPassword === v.newPasswordConfirmation, {
+    path: ['newPasswordConfirmation'],
+    message: 'La confirmación no coincide con la nueva contraseña',
+  });
 
 const tooManyAttempts = () =>
   new AppError(
@@ -90,6 +101,15 @@ export function createAuthRouter({
 
   router.get('/me', allowPasswordChangePending, requireAuth, async (req, res) => {
     const user = await getCurrentUser((req.user as { id: number }).id);
+    res.status(200).json({ user });
+  });
+
+  // Cambio propio de contraseña. Se permite con `mustChangePassword`: es justamente lo que se pide.
+  // El id sale de la sesión, nunca del cuerpo.
+  router.post('/password', allowPasswordChangePending, requireAuth, async (req, res) => {
+    const input = passwordSchema.parse(req.body);
+    const { user, token } = await changePassword((req.user as { id: number }).id, input, jwtSecret);
+    setSessionCookie(res, token, secureCookies);
     res.status(200).json({ user });
   });
 
