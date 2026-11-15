@@ -6,7 +6,7 @@
 |---|---|
 | Lenguaje | TypeScript, en modo `strict` |
 | Frontend | React + Vite + React Router + Context API. Los datos se piden con `fetch`, a través de un cliente propio. |
-| Backend | Node.js (versión LTS) + Express 5 |
+| Backend | Node.js 24 (LTS) + Express 5 |
 | Datos | PostgreSQL (instalado en cada máquina) + Prisma |
 | Validación | Zod, con esquemas propios en cada proyecto (`backend/` y `frontend/`) |
 | Contraseñas | argon2 |
@@ -15,9 +15,8 @@
 | Fechas | date-fns + @date-fns/tz |
 | Pruebas | Vitest + Supertest |
 | Calidad del código | ESLint + Prettier |
-| Integración continua | GitHub Actions, con PostgreSQL como servicio |
 
-**Versión de PostgreSQL:** los 3 integrantes y la integración continua tienen que usar **la misma versión mayor**. Queda fijada en `.env.example` y en el workflow.
+**Versión de PostgreSQL:** los 3 integrantes tienen que usar **la misma versión mayor**.
 
 ## Estructura del repositorio
 

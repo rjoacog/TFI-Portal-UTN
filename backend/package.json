@@ -5,12 +5,13 @@
   "type": "module",
   "description": "API de UTN Connect (Express 5 y Prisma)",
   "engines": {
-    "node": ">=20"
+    "node": ">=24 <25"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "build": "tsc",
     "test": "vitest run --passWithNoTests",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",

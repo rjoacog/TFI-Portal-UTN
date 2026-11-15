@@ -17,7 +17,7 @@ Closes #
 - [ ] Las fechas se guardan en UTC y se muestran en la hora de Argentina.
 - [ ] La pantalla se puede usar en el ancho de un celular (si hay cambios de interfaz).
 - [ ] Los mensajes de error explican qué pasó.
-- [ ] Pasan `npm run lint`, `npm run typecheck` y `npm run test`.
+- [ ] Pasan `npm run lint`, `npm run typecheck`, `npm run test` y `npm run build`.
 - [ ] Si hay migraciones, se conserva el SQL escrito a mano (índices parciales y restricciones `CHECK`).
 
 ## Notas
