@@ -6,11 +6,13 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
 
 | Concepto | Nombre en código | Estados o valores |
 |---|---|---|
-| Usuario | `User` | `ACTIVE`, `DISABLED` |
-| Identificador de acceso (el legajo, en el caso del alumno) | `User.loginId` | — |
+| Usuario (una cuenta por legajo) | `User` | `ACTIVE`, `DISABLED` |
+| Legajo (identificador de acceso, con prefijo por rol) | `User.loginId` | por ejemplo, `alu12345` |
+| Rol (uno por cuenta) | `User.role` | `STUDENT`, `TEACHER`, `ADMIN`, `DIRECTOR` |
+| DNI (7 u 8 dígitos, sin puntos) | `User.dni` | — |
+| Correo (dato de contacto, puede repetirse) | `User.email` | — |
 | Marca "debe cambiar contraseña" | `User.mustChangePassword` | — |
 | Versión de token | `User.tokenVersion` | — |
-| Rol | `Role` | `STUDENT`, `TEACHER`, `ADMIN`, `DIRECTOR` |
 | Carrera | `Program` | `ACTIVE`, `INACTIVE` |
 | Sede de la carrera (texto) | `Program.location` | — |
 | Carrera del alumno | `StudentProgram` | — |
@@ -43,10 +45,26 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
 
 ### Usuarios y acceso
 
+- **Una cuenta por legajo, un rol por cuenta.** Cada usuario tiene un solo rol, fijo. Si una persona tiene dos roles (por ejemplo, alumna y docente), tiene **dos cuentas**, cada una con su legajo y su contraseña. Para cambiar de rol se cierra la sesión y se entra con el otro legajo.
+- **Legajo:** el prefijo del rol seguido **solo de dígitos**.
+
+  | Rol | Prefijo | Ejemplo |
+  |---|---|---|
+  | `STUDENT` | `alu` | `alu12345` |
+  | `TEACHER` | `doc` | `doc12345` |
+  | `ADMIN` | `adm` | `adm12345` |
+  | `DIRECTOR` | `dir` | `dir12345` |
+
+  - Se guarda en minúscula. Al iniciar sesión se acepta en mayúsculas o en minúsculas: `ALU123` y `alu123` son el mismo legajo.
+  - Es único en todo el sistema. Gracias al prefijo, el mismo número puede existir con roles distintos.
+  - En el alta, el administrador elige el rol y escribe **solo el número**. El sistema arma el legajo con el prefijo, así el prefijo y el rol no pueden quedar distintos.
+- **DNI:** obligatorio, 7 u 8 dígitos sin puntos. Es lo que relaciona las cuentas de una misma persona. Una persona tiene **a lo sumo una cuenta por rol**: no puede haber dos cuentas con el mismo DNI y el mismo rol.
+- **Correo:** es solo un dato de contacto. Puede repetirse, porque las cuentas de una misma persona suelen compartirlo.
 - **Altas:** solo el administrador da de alta usuarios. La contraseña temporal se genera al azar, se muestra una sola vez y se guarda solo su hash. El usuario queda con `mustChangePassword = true`.
+- **El rol no se cambia.** No existe "asignar o quitar un rol": para darle otro rol a una persona se le crea otra cuenta.
 - **Contraseñas:** toda contraseña nueva tiene al menos 8 caracteres y es distinta de la anterior.
-- **Último administrador:** no se le puede quitar el rol `ADMIN` ni desactivarlo.
-- **Desactivar o quitar roles no borra datos.** Desactivar a un usuario conserva sus inscripciones, notas y asignaciones. Quitarle el rol docente no borra sus asignaciones, pero ya no puede operar el aula.
+- **Último administrador:** no se puede desactivar al último administrador activo.
+- **Desactivar no borra datos.** Desactivar a un usuario conserva sus inscripciones, notas y asignaciones. Un docente desactivado ya no puede operar el aula.
 - **Carreras del alumno:** un alumno tiene al menos una carrera. Quitarle una carrera no da de baja sus inscripciones.
 
 ### Oferta
@@ -54,6 +72,7 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
 - Una carrera o una materia inactiva no se ofrece para comisiones nuevas. Lo que ya se dictó se conserva.
 - Cada materia pertenece a una sola carrera. Su código no se repite dentro de esa carrera.
 - Una comisión tiene al menos un docente titular. Un docente no se asigna dos veces a la misma comisión.
+- **No se asigna como docente a quien cursa la comisión:** no se puede asignar una cuenta docente si una cuenta de alumno **con el mismo DNI** tiene una inscripción en esa comisión.
 - Al abrir una comisión se crea su aula.
 - **Comisión cerrada:**
   - no admite inscripciones, entregas, publicaciones, actividades ni clases nuevas;
@@ -67,7 +86,7 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
   - la comisión está abierta y es del período vigente;
   - la materia pertenece a una de las carreras del alumno;
   - el alumno no tiene otra inscripción activa en la misma materia y el mismo período;
-  - el alumno no es docente de esa comisión;
+  - ninguna cuenta docente **con el mismo DNI** que el alumno está asignada a esa comisión;
   - no existe una inscripción previa del alumno en esa comisión.
 - **Baja:** la puede hacer el alumno o el administrador.
 - **Reactivación:** solo la hace el administrador. La comisión tiene que estar abierta y el alumno no puede tener otra inscripción activa en la misma materia y el mismo período.
@@ -117,7 +136,7 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
 Estos cambios escriben un registro en `AuditLog`, **en la misma transacción** que el cambio:
 - una nota o la nota de aprobación;
 - el estado de una inscripción;
-- el estado, los roles o las carreras de un usuario;
+- el estado o las carreras de un usuario;
 - el restablecimiento de una contraseña;
 - cada corrección de asistencia.
 

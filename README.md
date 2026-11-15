@@ -12,13 +12,13 @@ El sistema reúne en un solo lugar:
 
 ## Roles
 
-Una persona es un usuario y puede tener más de un rol.
+Cada cuenta tiene **un solo rol** y se identifica con un legajo que empieza con el prefijo de ese rol: `alu` (alumno), `doc` (docente), `adm` (administrador) o `dir` (directivo). Por ejemplo, `alu12345`. Una persona con dos roles tiene dos cuentas, relacionadas por su DNI, y para cambiar de rol cierra la sesión y entra con el otro legajo.
 
 | Rol | Qué hace en el MVP |
 |---|---|
 | **Alumno** | Se inscribe a las comisiones de sus carreras y se da de baja. Entra al aula, entrega trabajos prácticos y consulta sus notas, su asistencia y su historial. |
 | **Docente** | Opera las comisiones que tiene asignadas: publica material y anuncios, crea actividades, califica, define la nota de aprobación y toma asistencia. |
-| **Administrador** | Da de alta usuarios (con una contraseña temporal) y administra roles, carreras, materias, períodos, comisiones, bajas y reactivaciones de inscripciones, y parámetros. |
+| **Administrador** | Da de alta usuarios (con su rol y una contraseña temporal) y administra carreras, materias, períodos, comisiones, bajas y reactivaciones de inscripciones, y parámetros. |
 | **Directivo** | El rol existe, pero sus pantallas quedan para después del MVP. |
 
 ---
@@ -27,7 +27,7 @@ Una persona es un usuario y puede tener más de un rol.
 
 **Incluye**
 - **Acceso:** inicio de sesión con legajo y contraseña, cambio obligatorio de la contraseña en el primer ingreso, cierre de sesión y edición del perfil.
-- **Administración:** usuarios, roles y carreras del alumno; carreras, materias, períodos lectivos y comisiones; configuración.
+- **Administración:** usuarios y carreras del alumno; carreras, materias, períodos lectivos y comisiones; configuración.
 - **Inscripción:** el alumno se inscribe y la inscripción queda activa al instante. Puede darse de baja. Volver a una comisión después de una baja lo hace el administrador.
 - **Aula:** material, anuncios, actividades (trabajos prácticos y evaluaciones) y entregas.
 - **Evaluación:**
@@ -178,7 +178,6 @@ Cada proyecto también tiene `npm run lint`, `npm run typecheck` y `npm run test
 
 ## Decisiones abiertas
 
-- **Identificador de acceso de docentes y administradores:** ¿también es el legajo? ¿Qué pasa si una persona tiene legajo de alumno y legajo docente? Hay que consultarlo con los docentes.
 - **Materias compartidas:** ¿las tecnicaturas comparten alguna materia, como Inglés o Matemática?
 - **Reportes obligatorios:** qué se exporta, en qué formato y para quién. Hay que consultarlo con la cátedra.
 - **Publicación:** todavía no se publica en ningún servidor. Cuando se haga, el frontend y la API tienen que quedar bajo el mismo dominio, para que viaje la cookie de sesión.
