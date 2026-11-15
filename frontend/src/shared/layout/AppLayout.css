@@ -1,30 +1,172 @@
-.app-layout {
+/* Sin sesión: pantalla completa (inicio de sesión). */
+.app-bare {
   min-height: 100vh;
 }
 
-.app-layout__header {
-  background: var(--color-primary);
-  padding: var(--space-3) var(--space-4);
+/* Cambio de contraseña pendiente: cabecera simple, sin menú. */
+.app-simple {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.app-layout__brand {
+.app-simple__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 14px var(--space-8);
+  background: var(--color-brand-dark);
+  color: var(--color-brand-dark-text);
+  border-bottom: 3px solid var(--color-primary);
+}
+
+.app-simple__brand {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--color-surface);
+}
+
+.app-simple__brand-accent {
+  color: var(--color-primary);
+}
+
+.app-simple__user {
+  font-size: 14px;
+}
+
+.app-simple__content {
+  flex: 1;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4) 48px;
+}
+
+/* Con sesión: menú lateral y barra superior. */
+.app-shell {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+
+.app-shell__side {
+  flex: 1 1 220px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px 12px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+
+.app-shell__brand {
+  padding: 6px 12px 14px;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-text);
   text-decoration: none;
 }
 
-.app-layout__brand:hover {
-  color: var(--color-surface);
+.app-shell__brand:hover {
+  color: var(--color-text);
 }
 
-.app-layout__brand-accent {
-  color: var(--color-accent);
+.app-shell__brand-accent {
+  color: var(--color-primary);
 }
 
-.app-layout__content {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
+.app-shell__nav {
+  display: block;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.app-shell__nav:hover {
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.app-shell__nav--on,
+.app-shell__nav--on:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-deep);
+  font-weight: 600;
+}
+
+.app-shell__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.app-shell__main {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 14px var(--space-8);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-shell__crumb {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.app-shell__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.app-shell__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-shell__content {
+  width: 100%;
+  max-width: 1120px;
+  padding: 28px var(--space-8) 40px;
+}
+
+@media (max-width: 480px) {
+  .app-shell__top,
+  .app-simple__header {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .app-shell__content {
+    padding: var(--space-6) var(--space-4) var(--space-8);
+  }
 }
