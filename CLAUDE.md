@@ -29,7 +29,7 @@ npm run dev          # levanta la API
 npm run test         # ejecuta las pruebas (Vitest)
 npm run lint         # revisa el estilo del código (ESLint)
 npm run typecheck    # verifica los tipos (tsc --noEmit)
-npm run build        # compila a dist/
+npm run build        # compila a dist/ (sin las pruebas)
 npm run db:migrate   # aplica las migraciones (prisma migrate dev)
 npm run db:seed      # crea el primer administrador
 npm run db:seed:dev  # carga datos ficticios de desarrollo (no corre en producción)

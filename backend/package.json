@@ -11,7 +11,7 @@
     "dev": "tsx watch src/server.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run --passWithNoTests",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
