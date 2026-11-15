@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useSession } from '../session';
 import { ROLE_LABEL, ROLE_MENU } from './menu';
@@ -12,8 +13,16 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
   isActive ? 'app-shell__nav app-shell__nav--on' : 'app-shell__nav';
 
 export function AppLayout() {
-  const { user } = useSession();
+  const { user, logout } = useSession();
   const { pathname } = useLocation();
+  const [leaving, setLeaving] = useState(false);
+
+  // Evita pedidos repetidos si se toca más de una vez.
+  const handleLogout = () => {
+    if (leaving) return;
+    setLeaving(true);
+    void logout().finally(() => setLeaving(false));
+  };
 
   // Sin sesión (o en el inicio de sesión) la pantalla ocupa todo el ancho, sin menú ni cabecera.
   if (!user || pathname === '/login') {
@@ -34,9 +43,19 @@ export function AppLayout() {
           <span className="app-simple__brand">
             UTN <span className="app-simple__brand-accent">Connect</span>
           </span>
-          <span className="app-simple__user">
-            {fullName} · Legajo {user.loginId}
-          </span>
+          <div className="app-simple__session">
+            <span className="app-simple__user">
+              {fullName} · Legajo {user.loginId}
+            </span>
+            <button
+              type="button"
+              className="app-simple__logout"
+              onClick={handleLogout}
+              disabled={leaving}
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </header>
         <main className="app-simple__content">
           <Outlet />
@@ -62,6 +81,14 @@ export function AppLayout() {
               {item.label}
             </NavLink>
           ))}
+          <button
+            type="button"
+            className="app-shell__nav app-shell__logout"
+            onClick={handleLogout}
+            disabled={leaving}
+          >
+            Cerrar sesión
+          </button>
         </div>
       </nav>
       <div className="app-shell__main">

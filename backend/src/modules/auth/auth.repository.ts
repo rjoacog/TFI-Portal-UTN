@@ -18,6 +18,11 @@ export function findUserByLoginId(loginId: string) {
   });
 }
 
+/** Incrementa `tokenVersion`: los tokens ya emitidos dejan de servir. */
+export async function incrementTokenVersion(id: number) {
+  await prisma.user.update({ where: { id }, data: { tokenVersion: { increment: 1 } } });
+}
+
 /** Datos públicos del usuario (nunca `passwordHash` ni `tokenVersion`). */
 export function findPublicUserById(id: number) {
   return prisma.user.findUnique({ where: { id }, select: userSelect });

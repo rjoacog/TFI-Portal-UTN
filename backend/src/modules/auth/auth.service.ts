@@ -2,7 +2,11 @@ import { UserStatus } from '@prisma/client';
 import { signToken } from '../../shared/auth/index.js';
 import { AppError } from '../../shared/errors/index.js';
 import { normalizeLegajo } from '../../shared/identity/index.js';
-import { findPublicUserById, findUserByLoginId } from './auth.repository.js';
+import {
+  findPublicUserById,
+  findUserByLoginId,
+  incrementTokenVersion,
+} from './auth.repository.js';
 import { hashPassword, verifyPassword } from './password.service.js';
 
 /** Usuario tal como lo devuelve la API de sesión. */
@@ -62,6 +66,14 @@ export async function login(
 
   const token = signToken({ sub: user.id, tv: user.tokenVersion }, jwtSecret);
   return { user: toSessionUser(user), token };
+}
+
+/**
+ * Cierre de sesión: incrementa `tokenVersion`, así el token deja de servir aunque alguien lo haya
+ * copiado. Cierra también las sesiones de la misma cuenta en otros dispositivos.
+ */
+export async function logout(userId: number): Promise<void> {
+  await incrementTokenVersion(userId);
 }
 
 /** Datos del usuario de la sesión actual. */

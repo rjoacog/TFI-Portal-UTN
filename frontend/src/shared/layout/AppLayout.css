@@ -33,8 +33,33 @@
   color: var(--color-primary);
 }
 
+.app-simple__session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: 14px;
+}
+
 .app-simple__user {
   font-size: 14px;
+}
+
+/* Como el enlace "Cerrar sesión" de la cabecera del boceto: texto blanco en negrita. */
+.app-simple__logout {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-surface);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.app-simple__logout:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .app-simple__content {
@@ -99,6 +124,21 @@
   background: var(--color-primary-soft);
   color: var(--color-primary-deep);
   font-weight: 600;
+}
+
+/* Botón que se ve como el resto de las opciones del menú. */
+.app-shell__logout {
+  width: 100%;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-shell__logout:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .app-shell__foot {

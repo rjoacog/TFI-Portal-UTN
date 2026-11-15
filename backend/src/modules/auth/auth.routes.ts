@@ -2,13 +2,14 @@ import { Router, type Request } from 'express';
 import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 import {
   allowPasswordChangePending,
+  clearSessionCookie,
   createRequireAuth,
   setSessionCookie,
 } from '../../shared/auth/index.js';
 import { AppError } from '../../shared/errors/index.js';
 import { normalizeLegajo } from '../../shared/identity/index.js';
 import { z } from '../../shared/validation/index.js';
-import { getCurrentUser, login } from './auth.service.js';
+import { getCurrentUser, login, logout } from './auth.service.js';
 
 /** Límite de intentos fallidos de inicio de sesión (decisión E1-1). */
 export interface LoginRateLimit {
@@ -90,6 +91,13 @@ export function createAuthRouter({
   router.get('/me', allowPasswordChangePending, requireAuth, async (req, res) => {
     const user = await getCurrentUser((req.user as { id: number }).id);
     res.status(200).json({ user });
+  });
+
+  // Se permite con `mustChangePassword`: cerrar sesión no está bloqueado por el cambio pendiente.
+  router.post('/logout', allowPasswordChangePending, requireAuth, async (req, res) => {
+    await logout((req.user as { id: number }).id);
+    clearSessionCookie(res, secureCookies);
+    res.status(204).end();
   });
 
   return router;
