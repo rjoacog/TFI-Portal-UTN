@@ -188,6 +188,84 @@ describe('límite de intentos', () => {
   });
 });
 
+describe('POST /api/auth/logout', () => {
+  const logout = (app: ReturnType<typeof buildApp>, cookies: string[]) =>
+    request(app).post('/api/auth/logout').set('Cookie', cookies);
+
+  it('responde 204, borra la cookie e incrementa tokenVersion en 1', async () => {
+    const user = await makeUser();
+    const app = buildApp();
+    const session = await post(app, user.loginId, PASSWORD);
+
+    const res = await logout(app, cookiesOf(session));
+
+    expect(res.status).toBe(204);
+    const cleared = cookiesOf(res)[0] ?? '';
+    expect(cleared).toContain(`${SESSION_COOKIE_NAME}=;`);
+    expect(cleared).toMatch(/Expires=Thu, 01 Jan 1970/);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.tokenVersion).toBe(user.tokenVersion + 1);
+  });
+
+  it('con mustChangePassword también se puede cerrar sesión', async () => {
+    const user = await makeUser({}, { mustChangePassword: true });
+    const app = buildApp();
+    const session = await post(app, user.loginId, PASSWORD);
+
+    const res = await logout(app, cookiesOf(session));
+
+    expect(res.status).toBe(204);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.tokenVersion).toBe(user.tokenVersion + 1);
+  });
+
+  it('rechaza usar la cookie anterior después de cerrar sesión: 401 UNAUTHENTICATED', async () => {
+    const user = await makeUser();
+    const app = buildApp();
+    const session = await post(app, user.loginId, PASSWORD);
+    const saved = cookiesOf(session);
+
+    await logout(app, saved);
+    const res = await request(app).get('/api/auth/me').set('Cookie', saved);
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('cierra también la otra sesión de la misma cuenta: 401 UNAUTHENTICATED', async () => {
+    const user = await makeUser();
+    const app = buildApp();
+    const first = await post(app, user.loginId, PASSWORD);
+    const second = await post(app, user.loginId, PASSWORD);
+
+    await logout(app, cookiesOf(first));
+    const res = await request(app).get('/api/auth/me').set('Cookie', cookiesOf(second));
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('sin sesión: 401 UNAUTHENTICATED', async () => {
+    const res = await request(buildApp()).post('/api/auth/logout');
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHENTICATED');
+  });
+});
+
+describe('Cache-Control de /api', () => {
+  it('las respuestas llevan no-store, también las de error', async () => {
+    const app = buildApp();
+    const user = await makeUser();
+    const ok = await post(app, user.loginId, PASSWORD);
+    const unauthorized = await request(app).get('/api/auth/me');
+
+    expect(ok.headers['cache-control']).toBe('no-store');
+    expect(unauthorized.status).toBe(401);
+    expect(unauthorized.headers['cache-control']).toBe('no-store');
+  });
+});
+
 describe('GET /api/auth/me', () => {
   it('devuelve los datos del usuario, sin passwordHash ni tokenVersion', async () => {
     const user = await makeUser();

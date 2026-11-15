@@ -23,6 +23,11 @@ export interface SessionContextValue {
   setUser: (user: SessionUser) => void;
   /** Deja la sesión vacía; las guardas de ruta mandan a `/login`. */
   clearSession: () => void;
+  /**
+   * Cierra la sesión en la API, limpia la sesión local y va a `/login` reemplazando la entrada
+   * del historial. Si la API falla (incluido un 401), igual sale: el usuario quiere salir.
+   */
+  logout: () => Promise<void>;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

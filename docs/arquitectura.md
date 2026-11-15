@@ -52,6 +52,9 @@ Son dos proyectos independientes: cada uno define sus propios esquemas Zod, tipo
 - **Endpoints de sesión:**
   - `POST /api/auth/login` (público): entrada `{ loginId, password }`; responde 200 con `{ user: { id, loginId, role, firstName, lastName, email, mustChangePassword } }` y escribe la cookie. Un usuario con `mustChangePassword` también inicia sesión.
   - `GET /api/auth/me`: requiere sesión y funciona aunque haya `mustChangePassword`. Responde 200 con el mismo cuerpo que el login. Lo usa la web al cargar para recuperar la sesión.
+  - `POST /api/auth/logout`: requiere sesión y funciona aunque haya `mustChangePassword`. Incrementa `tokenVersion`, borra la cookie y responde 204 sin cuerpo. Como el token ya no sirve, **se cierran todas las sesiones de esa cuenta**, también las de otros dispositivos. Sin sesión responde 401 `UNAUTHENTICATED`.
+- **`Cache-Control: no-store`:** todas las respuestas de `/api` (también las de error) lo llevan, para que el navegador no muestre datos guardados al volver atrás.
+- **Cerrar sesión en la web:** el botón "Cerrar sesión" está en el menú lateral y, con el cambio de contraseña pendiente, en la cabecera. Llama a la API, limpia la sesión y navega a `/login` reemplazando la entrada del historial. Si la API falla (por ejemplo, 401 porque la sesión ya había vencido), sale igual.
 - **CSRF:** los pedidos que modifican datos se rechazan si la cabecera `Origin` no está en la lista de orígenes permitidos.
 - **Desarrollo:** la web llama a la API a través del proxy de Vite, así quedan en el mismo origen.
 - **Producción:** la web y la API tienen que quedar bajo el mismo dominio o bajo subdominios del mismo dominio. Si no, la cookie no viaja.

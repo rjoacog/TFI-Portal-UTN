@@ -23,6 +23,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setStatus('anonymous');
   }, []);
 
+  const logout = useCallback(async () => {
+    try {
+      await api.post('/api/auth/logout');
+    } catch {
+      // 401 (la sesión ya había vencido), API apagada o error de red: se sale igual.
+    }
+    clearSession();
+    navigate('/login', { replace: true });
+  }, [clearSession, navigate]);
+
   // Ante un 401 solo se limpia la sesión: `RequireAuth` redirige a `/login` y recuerda la ruta.
   useEffect(() => setUnauthorizedHandler(clearSession), [clearSession]);
 
@@ -50,8 +60,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [setUser, clearSession]);
 
   const value = useMemo<SessionContextValue>(
-    () => ({ user, status, setUser, clearSession }),
-    [user, status, setUser, clearSession],
+    () => ({ user, status, setUser, clearSession, logout }),
+    [user, status, setUser, clearSession, logout],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

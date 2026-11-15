@@ -62,6 +62,12 @@ export function createApp({
   // Defensa contra CSRF: va antes de las rutas.
   app.use(createOriginCheck(corsOrigins));
 
+  // Ninguna respuesta de la API se guarda: al volver atrás el navegador no muestra datos viejos.
+  app.use('/api', (_req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
+
   app.use('/api/health', healthRouter);
   app.use('/api/auth', createAuthRouter({ jwtSecret, secureCookies, loginRateLimit }));
 
