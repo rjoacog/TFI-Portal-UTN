@@ -4,6 +4,7 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
+import { createAuthRouter, type LoginRateLimit } from './modules/auth/auth.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { createOriginCheck } from './shared/auth/index.js';
 import { AppError, errorHandler, notFoundHandler } from './shared/errors/index.js';
@@ -23,10 +24,18 @@ export interface AppOptions {
   secureCookies?: boolean;
   /** Permite cambiar el límite global, por ejemplo en las pruebas. */
   rateLimit?: { windowMs: number; limit: number };
+  /** Permite cambiar el límite de intentos fallidos de inicio de sesión (E1-1). */
+  loginRateLimit?: LoginRateLimit;
 }
 
 /** Crea la aplicación sin levantar el servidor, para poder probarla con Supertest. */
-export function createApp({ corsOrigins, rateLimit: limits = DEFAULT_RATE_LIMIT }: AppOptions) {
+export function createApp({
+  corsOrigins,
+  jwtSecret,
+  secureCookies = false,
+  rateLimit: limits = DEFAULT_RATE_LIMIT,
+  loginRateLimit,
+}: AppOptions) {
   const app: Express = express();
 
   app.use(helmet());
@@ -54,6 +63,7 @@ export function createApp({ corsOrigins, rateLimit: limits = DEFAULT_RATE_LIMIT 
   app.use(createOriginCheck(corsOrigins));
 
   app.use('/api/health', healthRouter);
+  app.use('/api/auth', createAuthRouter({ jwtSecret, secureCookies, loginRateLimit }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

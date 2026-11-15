@@ -47,7 +47,11 @@ Son dos proyectos independientes: cada uno define sus propios esquemas Zod, tipo
 - **Inicio de sesión:**
   - Si la cuenta está desactivada **y** la contraseña es correcta, se responde "La cuenta no está habilitada".
   - Cualquier otro fallo responde "Credenciales no válidas", para no revelar qué identificadores existen.
-  - Hay un límite de intentos por identificador y por IP.
+  - Límite de intentos (E1-1), solo en `POST /api/auth/login` y además del límite global: **5 fallidos en 15 minutos por legajo** (la clave es el legajo normalizado, así `ALU1` y `alu1` cuentan juntos) y **50 fallidos en 15 minutos por IP**. Solo cuentan los fallidos; un ingreso correcto reinicia el contador del legajo. Con el límite alcanzado se rechaza aunque la contraseña sea correcta. Los valores se pueden cambiar con `AppOptions.loginRateLimit` (para las pruebas).
+  - Si el legajo no existe, igual se verifica la contraseña contra un hash ficticio, para que la respuesta tarde lo mismo.
+- **Endpoints de sesión:**
+  - `POST /api/auth/login` (público): entrada `{ loginId, password }`; responde 200 con `{ user: { id, loginId, role, firstName, lastName, email, mustChangePassword } }` y escribe la cookie. Un usuario con `mustChangePassword` también inicia sesión.
+  - `GET /api/auth/me`: requiere sesión y funciona aunque haya `mustChangePassword`. Responde 200 con el mismo cuerpo que el login. Lo usa la web al cargar para recuperar la sesión.
 - **CSRF:** los pedidos que modifican datos se rechazan si la cabecera `Origin` no está en la lista de orígenes permitidos.
 - **Desarrollo:** la web llama a la API a través del proxy de Vite, así quedan en el mismo origen.
 - **Producción:** la web y la API tienen que quedar bajo el mismo dominio o bajo subdominios del mismo dominio. Si no, la cookie no viaja.
@@ -80,6 +84,9 @@ Los servicios y las rutas lanzan `AppError(status, code, message)` de `backend/s
 | Cuerpo demasiado grande | 413 | `PAYLOAD_TOO_LARGE` |
 | La contraseña nueva tiene menos de 8 caracteres ("La contraseña tiene que tener al menos 8 caracteres") | 400 | `PASSWORD_TOO_SHORT` |
 | La contraseña nueva es igual a la actual ("La nueva contraseña tiene que ser distinta de la actual") | 400 | `PASSWORD_REUSED` |
+| Legajo inexistente o contraseña incorrecta en el inicio de sesión ("Credenciales no válidas"). No es una sesión vencida | 401 | `INVALID_CREDENTIALS` |
+| Cuenta desactivada con la contraseña correcta ("La cuenta no está habilitada. Comunicate con la administración.") | 403 | `ACCOUNT_DISABLED` |
+| Límite de intentos fallidos de inicio de sesión superado ("Hiciste demasiados intentos fallidos. Esperá 15 minutos y volvé a intentar.") | 429 | `TOO_MANY_LOGIN_ATTEMPTS` |
 | Ruta inexistente, o recurso de una comisión a la que el usuario no pertenece | 404 | `NOT_FOUND` |
 | Sin sesión: falta la cookie, el token es inválido o venció, `tv` no coincide con `tokenVersion` o el usuario está desactivado | 401 | `UNAUTHENTICATED` |
 | El usuario tiene `mustChangePassword` y la ruta no está permitida | 403 | `PASSWORD_CHANGE_REQUIRED` |
