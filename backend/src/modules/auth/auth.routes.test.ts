@@ -293,3 +293,150 @@ describe('GET /api/auth/me', () => {
     }
   });
 });
+
+describe('POST /api/auth/password', () => {
+  const NEW_PASSWORD = 'nueva-contraseña-1';
+  const body = (over: Record<string, unknown> = {}) => ({
+    currentPassword: PASSWORD,
+    newPassword: NEW_PASSWORD,
+    newPasswordConfirmation: NEW_PASSWORD,
+    ...over,
+  });
+
+  async function loginAs(app: ReturnType<typeof buildApp>, loginId: string) {
+    const res = await post(app, loginId, PASSWORD);
+    return cookiesOf(res);
+  }
+
+  it('cambia la contraseña: la nueva sirve, la anterior no, y devuelve el usuario', async () => {
+    const user = await makeUser();
+    const app = buildApp();
+    const cookie = await loginAs(app, user.loginId);
+
+    const res = await request(app).post('/api/auth/password').set('Cookie', cookie).send(body());
+
+    expect(res.status).toBe(200);
+    expect(res.body.user).toMatchObject({ id: user.id, mustChangePassword: false });
+    expect((await post(app, user.loginId, NEW_PASSWORD)).status).toBe(200);
+    expect((await post(app, user.loginId, PASSWORD)).status).toBe(401);
+  });
+
+  it('con la marca: se apaga y las rutas comunes dejan de pedir el cambio', async () => {
+    const user = await makeUser({}, { mustChangePassword: true });
+    const app = buildApp();
+    const cookie = await loginAs(app, user.loginId);
+
+    const res = await request(app).post('/api/auth/password').set('Cookie', cookie).send(body());
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.mustChangePassword).toBe(false);
+    const fresh = cookiesOf(res);
+    const me = await request(app).get('/api/auth/me').set('Cookie', fresh);
+    expect(me.body.user.mustChangePassword).toBe(false);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.mustChangePassword).toBe(false);
+  });
+
+  it('la sesión actual sigue con la cookie nueva; otra sesión de la cuenta da 401', async () => {
+    const user = await makeUser();
+    const app = buildApp();
+    const current = await loginAs(app, user.loginId);
+    const other = await loginAs(app, user.loginId);
+
+    const res = await request(app).post('/api/auth/password').set('Cookie', current).send(body());
+
+    expect(res.status).toBe(200);
+    expect((await request(app).get('/api/auth/me').set('Cookie', cookiesOf(res))).status).toBe(200);
+    expect((await request(app).get('/api/auth/me').set('Cookie', other)).status).toBe(401);
+  });
+
+  it.each([
+    [
+      'contraseña actual incorrecta',
+      { currentPassword: 'incorrecta-123' },
+      'INVALID_CURRENT_PASSWORD',
+    ],
+    [
+      'nueva de menos de 8 caracteres',
+      { newPassword: 'corta', newPasswordConfirmation: 'corta' },
+      'PASSWORD_TOO_SHORT',
+    ],
+    [
+      'nueva igual a la actual',
+      { newPassword: PASSWORD, newPasswordConfirmation: PASSWORD },
+      'PASSWORD_REUSED',
+    ],
+  ])('rechaza %s sin cambiar nada', async (_name, over, code) => {
+    const user = await makeUser({}, { mustChangePassword: true });
+    const app = buildApp();
+    const cookie = await loginAs(app, user.loginId);
+    const before = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+
+    const res = await request(app)
+      .post('/api/auth/password')
+      .set('Cookie', cookie)
+      .send(body(over));
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe(code);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.passwordHash).toBe(before.passwordHash);
+    expect(after.mustChangePassword).toBe(true);
+    expect(after.tokenVersion).toBe(before.tokenVersion);
+  });
+
+  it('la confirmación distinta da VALIDATION_ERROR con el detalle en newPasswordConfirmation', async () => {
+    const user = await makeUser();
+    const app = buildApp();
+    const cookie = await loginAs(app, user.loginId);
+    const before = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+
+    const res = await request(app)
+      .post('/api/auth/password')
+      .set('Cookie', cookie)
+      .send(body({ newPasswordConfirmation: 'otra-distinta-1' }));
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.details).toEqual([
+      expect.objectContaining({ path: 'newPasswordConfirmation' }),
+    ]);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.tokenVersion).toBe(before.tokenVersion);
+  });
+
+  it('los tres campos son obligatorios', async () => {
+    const user = await makeUser();
+    const app = buildApp();
+    const cookie = await loginAs(app, user.loginId);
+
+    const res = await request(app)
+      .post('/api/auth/password')
+      .set('Cookie', cookie)
+      .send({ newPassword: NEW_PASSWORD });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('sin sesión: 401 UNAUTHENTICATED', async () => {
+    const res = await request(buildApp()).post('/api/auth/password').send(body());
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('cambia solo la contraseña de la sesión, aunque el cuerpo traiga otro id', async () => {
+    const me = await makeUser();
+    const other = await makeUser();
+    const app = buildApp();
+    const cookie = await loginAs(app, me.loginId);
+
+    await request(app)
+      .post('/api/auth/password')
+      .set('Cookie', cookie)
+      .send(body({ userId: other.id }));
+
+    expect((await post(app, other.loginId, PASSWORD)).status).toBe(200);
+    expect((await post(app, me.loginId, NEW_PASSWORD)).status).toBe(200);
+  });
+});

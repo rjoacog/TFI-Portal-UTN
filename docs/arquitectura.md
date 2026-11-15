@@ -52,6 +52,7 @@ Son dos proyectos independientes: cada uno define sus propios esquemas Zod, tipo
 - **Endpoints de sesión:**
   - `POST /api/auth/login` (público): entrada `{ loginId, password }`; responde 200 con `{ user: { id, loginId, role, firstName, lastName, email, mustChangePassword } }` y escribe la cookie. Un usuario con `mustChangePassword` también inicia sesión.
   - `GET /api/auth/me`: requiere sesión y funciona aunque haya `mustChangePassword`. Responde 200 con el mismo cuerpo que el login. Lo usa la web al cargar para recuperar la sesión.
+  - `POST /api/auth/password`: requiere sesión y funciona aunque haya `mustChangePassword`. Entrada `{ currentPassword, newPassword, newPasswordConfirmation }`; el usuario sale de la sesión, no del cuerpo. Verifica la actual, aplica la política (`validateNewPassword`) y cambia con `setPassword` en una transacción, apagando `mustChangePassword`. Cierra las otras sesiones de la cuenta (E1-2) y escribe una cookie nueva en la misma respuesta, así que la sesión actual sigue. Responde 200 con el mismo cuerpo que `/me`. Errores: 400 `INVALID_CURRENT_PASSWORD`, `PASSWORD_TOO_SHORT`, `PASSWORD_REUSED`, o `VALIDATION_ERROR` con el detalle en `newPasswordConfirmation`.
   - `POST /api/auth/logout`: requiere sesión y funciona aunque haya `mustChangePassword`. Incrementa `tokenVersion`, borra la cookie y responde 204 sin cuerpo. Como el token ya no sirve, **se cierran todas las sesiones de esa cuenta**, también las de otros dispositivos. Sin sesión responde 401 `UNAUTHENTICATED`.
 - **`Cache-Control: no-store`:** todas las respuestas de `/api` (también las de error) lo llevan, para que el navegador no muestre datos guardados al volver atrás.
 - **Cerrar sesión en la web:** el botón "Cerrar sesión" está en el menú lateral y, con el cambio de contraseña pendiente, en la cabecera. Llama a la API, limpia la sesión y navega a `/login` reemplazando la entrada del historial. Si la API falla (por ejemplo, 401 porque la sesión ya había vencido), sale igual.
@@ -87,6 +88,7 @@ Los servicios y las rutas lanzan `AppError(status, code, message)` de `backend/s
 | Cuerpo demasiado grande | 413 | `PAYLOAD_TOO_LARGE` |
 | La contraseña nueva tiene menos de 8 caracteres ("La contraseña tiene que tener al menos 8 caracteres") | 400 | `PASSWORD_TOO_SHORT` |
 | La contraseña nueva es igual a la actual ("La nueva contraseña tiene que ser distinta de la actual") | 400 | `PASSWORD_REUSED` |
+| La contraseña actual es incorrecta en el cambio de contraseña ("La contraseña actual no es correcta") | 400 | `INVALID_CURRENT_PASSWORD` |
 | Legajo inexistente o contraseña incorrecta en el inicio de sesión ("Credenciales no válidas"). No es una sesión vencida | 401 | `INVALID_CREDENTIALS` |
 | Cuenta desactivada con la contraseña correcta ("La cuenta no está habilitada. Comunicate con la administración.") | 403 | `ACCOUNT_DISABLED` |
 | Límite de intentos fallidos de inicio de sesión superado ("Hiciste demasiados intentos fallidos. Esperá 15 minutos y volvé a intentar.") | 429 | `TOO_MANY_LOGIN_ATTEMPTS` |
