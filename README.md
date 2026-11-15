@@ -178,7 +178,6 @@ Cada proyecto también tiene `npm run lint`, `npm run typecheck` y `npm run test
 
 ## Decisiones abiertas
 
-- **Materias compartidas:** ¿las tecnicaturas comparten alguna materia, como Inglés o Matemática?
 - **Reportes obligatorios:** qué se exporta, en qué formato y para quién. Hay que consultarlo con la cátedra.
 - **Publicación:** todavía no se publica en ningún servidor. Cuando se haga, el frontend y la API tienen que quedar bajo el mismo dominio, para que viaje la cookie de sesión.
 
