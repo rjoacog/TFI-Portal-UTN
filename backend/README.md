@@ -53,6 +53,21 @@ Todos los usuarios tienen DNI, la contraseña de `SEED_DEV_PASSWORD` y `mustChan
 | `doc3` y `alu10006` | Docente y alumno | Dos cuentas con el mismo DNI (una persona con dos roles). `doc3` es titular de `SO1` (Sistemas); `alu10006` cursa Programación. Para probar la regla de docente y alumno de la misma comisión. |
 | `alu10099` | Alumno | Desactivado: para probar "La cuenta no está habilitada". |
 
+## Probar el inicio de sesión
+
+Con la API levantada (`npm run dev`), el login es `POST /api/auth/login` con `{ "loginId", "password" }`; la sesión viaja en la cookie `utn_session`.
+
+```bash
+# -c guarda la cookie y -b la envía
+curl -i -c cookies.txt -H "Content-Type: application/json"   -d '{"loginId":"alu10001","password":"<SEED_DEV_PASSWORD>"}' http://localhost:3000/api/auth/login
+curl -b cookies.txt http://localhost:3000/api/auth/me
+```
+
+- **Administrador (`db:seed`):** usá `SEED_ADMIN_LOGIN_ID` y `SEED_ADMIN_PASSWORD` de tu `.env`. Tiene `mustChangePassword = true`: inicia sesión y `GET /api/auth/me` responde 200, pero las demás rutas responden 403 `PASSWORD_CHANGE_REQUIRED`.
+- **Usuarios de `db:seed:dev`:** cualquiera de la tabla de arriba con la contraseña de `SEED_DEV_PASSWORD` (el legajo no distingue mayúsculas ni espacios en los extremos).
+- **Cuenta desactivada:** `alu10099` con la contraseña correcta responde 403 `ACCOUNT_DISABLED`; con una incorrecta, 401 `INVALID_CREDENTIALS`.
+- **Límite de intentos:** 5 fallos seguidos con el mismo legajo en 15 minutos responden 429 `TOO_MANY_LOGIN_ATTEMPTS`, aunque la contraseña sea correcta. Para volver a probar, reiniciá la API (el contador está en memoria).
+
 ## Errores
 
 Todas las respuestas de error usan el formato común, descripto en [docs/arquitectura.md](../docs/arquitectura.md#formato-común-de-errores). Desde un servicio o una ruta se lanza un `AppError` (de `src/shared/errors`), y el middleware de errores arma la respuesta.
