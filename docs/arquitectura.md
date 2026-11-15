@@ -41,6 +41,8 @@ Son dos proyectos independientes: cada uno define sus propios esquemas Zod, tipo
 - **El token:** contiene `sub` (el id del usuario) y `tv` (su `tokenVersion`). Vence a las 8 horas.
 - **El control de cada pedido:** un middleware compara `tv` con el `tokenVersion` guardado en la base y verifica que el usuario esté activo.
 - **Invalidar sesiones:** cerrar sesión, desactivar al usuario o restablecer su contraseña **incrementa** `tokenVersion`. Con eso, los tokens que ya existían dejan de servir.
+- **Servicio único de contraseñas** (`backend/src/modules/auth/password.service.ts`): es el único lugar que hashea (argon2id), valida la política (al menos 8 caracteres y distinta de la actual), genera contraseñas temporales y escribe `passwordHash`. Lo usan el cambio de contraseña, el alta, el restablecimiento y los seeds. `setPassword` recibe la transacción de quien llama, para que la auditoría vaya en la misma transacción.
+- **Cambiar la contraseña invalida las sesiones (E1-2):** todo cambio de contraseña incrementa `tokenVersion`, también el voluntario. `setPassword` devuelve el valor nuevo para firmar la cookie de la sesión actual.
 - **Cambio obligatorio de contraseña:** si el usuario tiene `mustChangePassword`, la API solo le permite cambiar la contraseña y cerrar sesión.
 - **Inicio de sesión:**
   - Si la cuenta está desactivada **y** la contraseña es correcta, se responde "La cuenta no está habilitada".
@@ -76,6 +78,8 @@ Los servicios y las rutas lanzan `AppError(status, code, message)` de `backend/s
 | `ZodError` (validación de la entrada) | 400 | `VALIDATION_ERROR` |
 | Cuerpo que no es un JSON válido | 400 | `INVALID_JSON` |
 | Cuerpo demasiado grande | 413 | `PAYLOAD_TOO_LARGE` |
+| La contraseña nueva tiene menos de 8 caracteres ("La contraseña tiene que tener al menos 8 caracteres") | 400 | `PASSWORD_TOO_SHORT` |
+| La contraseña nueva es igual a la actual ("La nueva contraseña tiene que ser distinta de la actual") | 400 | `PASSWORD_REUSED` |
 | Ruta inexistente, o recurso de una comisión a la que el usuario no pertenece | 404 | `NOT_FOUND` |
 | Sin sesión: falta la cookie, el token es inválido o venció, `tv` no coincide con `tokenVersion` o el usuario está desactivado | 401 | `UNAUTHENTICATED` |
 | El usuario tiene `mustChangePassword` y la ruta no está permitida | 403 | `PASSWORD_CHANGE_REQUIRED` |

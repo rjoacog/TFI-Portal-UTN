@@ -67,7 +67,7 @@ export async function createUser({ role = RoleName.STUDENT, ...overrides }: Crea
       email: `user${userCounter}@test.local`,
       firstName: 'Nombre',
       lastName: 'Apellido',
-      // No es un hash real: las pruebas que necesiten uno válido lo generan con argon2.
+      // No es un hash real: las pruebas que necesiten uno válido lo generan con `hashPassword`.
       passwordHash: 'hash-de-prueba',
       ...overrides,
     },
