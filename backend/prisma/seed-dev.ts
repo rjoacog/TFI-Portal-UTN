@@ -1,5 +1,5 @@
 import { PrismaClient, type RoleName, type TeachingPosition } from '@prisma/client';
-import argon2 from 'argon2';
+import { hashPassword } from '../src/modules/auth/password.service.js';
 import { buildLegajo } from '../src/shared/identity/index.js';
 import { z } from '../src/shared/validation/index.js';
 
@@ -122,7 +122,7 @@ async function main() {
   const prisma = new PrismaClient();
   try {
     // La fila de `Settings` la inserta la primera migración.
-    const passwordHash = await argon2.hash(parsed.data.SEED_DEV_PASSWORD);
+    const passwordHash = await hashPassword(parsed.data.SEED_DEV_PASSWORD);
 
     // Carreras y materias.
     const programIds = new Map<string, number>();

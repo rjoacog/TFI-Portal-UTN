@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import argon2 from 'argon2';
+import { hashPassword } from '../src/modules/auth/password.service.js';
 import { RoleName } from '@prisma/client';
 import { dniSchema, legajoSchema } from '../src/shared/identity/index.js';
 import { z } from '../src/shared/validation/index.js';
@@ -56,7 +56,7 @@ async function main() {
       return;
     }
 
-    const passwordHash = await argon2.hash(SEED_ADMIN_PASSWORD);
+    const passwordHash = await hashPassword(SEED_ADMIN_PASSWORD);
 
     await prisma.user.create({
       data: {
