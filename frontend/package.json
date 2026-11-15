@@ -5,12 +5,13 @@
   "type": "module",
   "description": "Web de UTN Connect (React, Vite y React Router)",
   "engines": {
-    "node": ">=20"
+    "node": ">=24 <25"
   },
   "scripts": {
     "dev": "vite",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {

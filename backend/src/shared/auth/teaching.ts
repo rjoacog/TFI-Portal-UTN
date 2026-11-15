@@ -9,7 +9,7 @@ import type { AuthUser } from './middleware.js';
  */
 export async function assertTeachingAssignment(user: AuthUser, sectionId: number) {
   const isAssigned =
-    user.roles.includes(RoleName.TEACHER) && (await hasTeachingAssignment(user.id, sectionId));
+    user.role === RoleName.TEACHER && (await hasTeachingAssignment(user.id, sectionId));
   if (!isAssigned) {
     throw new AppError(404, 'NOT_FOUND', 'El recurso solicitado no existe');
   }

@@ -6,7 +6,7 @@
 |---|---|
 | Lenguaje | TypeScript, en modo `strict` |
 | Frontend | React + Vite + React Router + Context API. Los datos se piden con `fetch`, a través de un cliente propio. |
-| Backend | Node.js (versión LTS) + Express 5 |
+| Backend | Node.js 24 (LTS) + Express 5 |
 | Datos | PostgreSQL (instalado en cada máquina) + Prisma |
 | Validación | Zod, con esquemas propios en cada proyecto (`backend/` y `frontend/`) |
 | Contraseñas | argon2 |
@@ -15,9 +15,8 @@
 | Fechas | date-fns + @date-fns/tz |
 | Pruebas | Vitest + Supertest |
 | Calidad del código | ESLint + Prettier |
-| Integración continua | GitHub Actions, con PostgreSQL como servicio |
 
-**Versión de PostgreSQL:** los 3 integrantes y la integración continua tienen que usar **la misma versión mayor**. Queda fijada en `.env.example` y en el workflow.
+**Versión de PostgreSQL:** los 3 integrantes tienen que usar **la misma versión mayor**.
 
 ## Estructura del repositorio
 
@@ -136,7 +135,7 @@ Cada evento se emite desde un único punto del servicio correspondiente. En el M
 ## Pruebas
 
 - **Cobertura de los issues:** cada criterio de aceptación tiene al menos una prueba. Se priorizan las pruebas de la API con Supertest, contra PostgreSQL, en el esquema `test` de la misma base `utn_connect` (variable `DATABASE_URL_TEST`: la misma conexión que `DATABASE_URL`, con `?schema=test`). Los datos de desarrollo quedan en el esquema `public`.
-- **Infraestructura (`backend/src/test/`):** todas las pruebas exigen `DATABASE_URL_TEST` con `schema=test`; si falta, no corren. Antes de correr, Vitest aplica las migraciones al esquema `test` (`prisma migrate deploy`) y, durante las pruebas, el cliente de Prisma apunta a ese esquema. Las pruebas no corren en paralelo porque comparten el esquema. Cada prueba que usa la base llama a `resetDatabase()`, que vacía las tablas salvo `roles` y `settings` y devuelve `settings` a sus valores iniciales; `createUser()` crea usuarios con roles.
+- **Infraestructura (`backend/src/test/`):** todas las pruebas exigen `DATABASE_URL_TEST` con `schema=test`; si falta, no corren. Antes de correr, Vitest aplica las migraciones al esquema `test` (`prisma migrate deploy`) y, durante las pruebas, el cliente de Prisma apunta a ese esquema. Las pruebas no corren en paralelo porque comparten el esquema. Cada prueba que usa la base llama a `resetDatabase()`, que vacía las tablas salvo `settings` y devuelve `settings` a sus valores iniciales; `createUser({ role })` crea una cuenta con un solo rol (por defecto, `STUDENT`), con un legajo con el prefijo del rol, un DNI y un correo generados que no se repiten.
 - **Permisos:** cada endpoint protegido tiene su prueba de permisos. Otro docente, otro alumno y un usuario sin el rol tienen que recibir el error que corresponde.
 - **Bordes de fecha:** las reglas que dependen de fechas se prueban en sus límites. Por ejemplo, el instante exacto de la fecha límite, o una baja justo antes o justo después de la fecha de una clase.
 

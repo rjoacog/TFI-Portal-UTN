@@ -61,11 +61,16 @@ enum TeachingPosition {
 
 model User {
   id                 Int        @id @default(autoincrement())
-  /// Identificador de acceso. En el caso del alumno es el legajo.
+  /// Legajo: prefijo del rol y dígitos (por ejemplo, `alu12345`). Es el identificador de acceso.
   loginId            String     @unique @map("login_id")
+  /// Rol de la cuenta. Es único y no cambia: una persona con dos roles tiene dos cuentas.
+  role               RoleName
+  /// DNI (7 u 8 dígitos, sin puntos; se valida con Zod en el servicio). Relaciona las cuentas de una persona.
+  dni                String
   firstName          String     @map("first_name")
   lastName           String     @map("last_name")
-  email              String     @unique
+  /// Dato de contacto: puede repetirse entre cuentas de la misma persona.
+  email              String
   passwordHash       String     @map("password_hash")
   mustChangePassword Boolean    @default(true) @map("must_change_password")
   tokenVersion       Int        @default(0) @map("token_version")
@@ -73,36 +78,11 @@ model User {
   createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
 
-  roles               UserRole[]
   programs            StudentProgram[]
   teachingAssignments TeachingAssignment[]
 
+  @@unique([dni, role])
   @@map("users")
-}
-
-model Role {
-  id        Int      @id @default(autoincrement())
-  name      RoleName @unique
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
-
-  users UserRole[]
-
-  @@map("roles")
-}
-
-model UserRole {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
-  roleId    Int      @map("role_id")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
-
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
-
-  @@unique([userId, roleId])
-  @@map("user_roles")
 }
 
 model StudentProgram {

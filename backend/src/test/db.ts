@@ -1,5 +1,6 @@
 import { RoleName } from '@prisma/client';
 import { prisma } from '../shared/db/index.js';
+import { buildLegajo } from '../shared/identity/index.js';
 
 /** Valores iniciales de la fila única de `settings`, tal como los carga la primera migración. */
 const INITIAL_SETTINGS = {
@@ -15,7 +16,7 @@ const INITIAL_SETTINGS = {
 };
 
 /**
- * Deja la base como después de migrar: vacía todas las tablas, salvo `roles` y `settings`
+ * Deja la base como después de migrar: vacía todas las tablas, salvo `settings`
  * (datos base de la migración), y devuelve `settings` a sus valores iniciales.
  */
 export async function resetDatabase() {
@@ -30,7 +31,7 @@ export async function resetDatabase() {
   const tables = await prisma.$queryRaw<{ tablename: string }[]>`
     SELECT tablename FROM pg_tables
     WHERE schemaname = current_schema()
-      AND tablename NOT IN ('roles', 'settings', 'academic_terms', '_prisma_migrations')`;
+      AND tablename NOT IN ('settings', 'academic_terms', '_prisma_migrations')`;
   if (tables.length > 0) {
     const names = tables.map(({ tablename }) => `"${tablename}"`).join(', ');
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${names} RESTART IDENTITY CASCADE`);
@@ -44,28 +45,31 @@ export async function resetDatabase() {
 let userCounter = 0;
 
 type CreateUserOptions = {
-  roles?: RoleName[];
+  role?: RoleName;
   loginId?: string;
+  dni?: string;
   email?: string;
   firstName?: string;
   lastName?: string;
 };
 
-/** Crea un usuario con los roles indicados (por defecto, ninguno). Los datos únicos se generan solos. */
-export async function createUser({ roles = [], ...overrides }: CreateUserOptions = {}) {
+/**
+ * Crea un usuario con un solo rol (por defecto, `STUDENT`). El legajo (con el prefijo del rol),
+ * el DNI y el correo se generan solos y no se repiten.
+ */
+export async function createUser({ role = RoleName.STUDENT, ...overrides }: CreateUserOptions = {}) {
   userCounter += 1;
-  const roleRows = await prisma.role.findMany({ where: { name: { in: roles } } });
   return prisma.user.create({
     data: {
-      loginId: `user${userCounter}`,
+      loginId: buildLegajo(role, userCounter),
+      role,
+      dni: String(10000000 + userCounter),
       email: `user${userCounter}@test.local`,
       firstName: 'Nombre',
       lastName: 'Apellido',
       // No es un hash real: las pruebas que necesiten uno válido lo generan con argon2.
       passwordHash: 'hash-de-prueba',
       ...overrides,
-      roles: { create: roleRows.map((role) => ({ roleId: role.id })) },
     },
-    include: { roles: { include: { role: true } } },
   });
 }

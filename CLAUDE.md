@@ -29,6 +29,7 @@ npm run dev          # levanta la API
 npm run test         # ejecuta las pruebas (Vitest)
 npm run lint         # revisa el estilo del código (ESLint)
 npm run typecheck    # verifica los tipos (tsc --noEmit)
+npm run build        # compila a dist/
 npm run db:migrate   # aplica las migraciones (prisma migrate dev)
 npm run db:seed      # crea el primer administrador
 npm run db:seed:dev  # carga datos ficticios de desarrollo (no corre en producción)
@@ -38,11 +39,12 @@ npm run dev          # levanta la web (necesita la API en el puerto 3000: proxy 
 npm run test         # ejecuta las pruebas (Vitest)
 npm run lint         # revisa el estilo del código (ESLint)
 npm run typecheck    # verifica los tipos (tsc --noEmit)
+npm run build        # compila a dist/
 ```
 
 PostgreSQL corre instalado en cada máquina, sin Docker. La conexión se configura en `backend/.env`.
 
-Antes de dar una tarea por terminada, tienen que pasar `lint`, `typecheck` y `test`.
+Antes de dar una tarea por terminada, tienen que pasar `lint`, `typecheck`, `test` y `build`.
 
 ## Arquitectura
 

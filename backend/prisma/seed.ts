@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import argon2 from 'argon2';
+import { RoleName } from '@prisma/client';
+import { dniSchema, legajoSchema } from '../src/shared/identity/index.js';
 import { z } from '../src/shared/validation/index.js';
 
 const required = (value: unknown) => (value === undefined ? 'Es obligatoria' : undefined);
@@ -7,8 +9,8 @@ const required = (value: unknown) => (value === undefined ? 'Es obligatoria' : u
 const seedEnvSchema = z.object({
   SEED_ADMIN_LOGIN_ID: z
     .string({ error: (issue) => required(issue.input) })
-    .trim()
-    .min(1, { error: 'Es obligatoria' }),
+    .pipe(legajoSchema(RoleName.ADMIN)),
+  SEED_ADMIN_DNI: z.string({ error: (issue) => required(issue.input) }).pipe(dniSchema),
   SEED_ADMIN_EMAIL: z.email({
     error: (issue) => required(issue.input) ?? 'Tiene que ser un correo válido',
   }),
@@ -41,6 +43,7 @@ async function main() {
   }
   const {
     SEED_ADMIN_LOGIN_ID: loginId,
+    SEED_ADMIN_DNI: dni,
     SEED_ADMIN_EMAIL: email,
     SEED_ADMIN_PASSWORD,
   } = parsed.data;
@@ -53,19 +56,18 @@ async function main() {
       return;
     }
 
-    // Los roles los inserta la migración: el seed no los crea.
-    const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: 'ADMIN' } });
     const passwordHash = await argon2.hash(SEED_ADMIN_PASSWORD);
 
     await prisma.user.create({
       data: {
         loginId,
+        dni,
+        role: RoleName.ADMIN,
         email,
         firstName: 'Administrador',
         lastName: 'Sistema',
         passwordHash,
         mustChangePassword: true,
-        roles: { create: { roleId: adminRole.id } },
       },
     });
     console.log(`Administrador "${loginId}" creado. Tiene que cambiar la contraseña al ingresar.`);

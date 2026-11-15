@@ -4,7 +4,7 @@ Web hecha con React, Vite y React Router. Es un proyecto independiente: se insta
 
 ## Requisitos
 
-Node.js LTS y npm.
+Node.js 24 y npm.
 
 ## Puesta en marcha
 
@@ -23,6 +23,7 @@ npm run dev
 | `npm run dev` | Levanta la web en modo desarrollo (Vite). |
 | `npm run lint` | Revisa el estilo del código (ESLint). |
 | `npm run typecheck` | Verifica los tipos (`tsc --noEmit`). |
+| `npm run build` | Verifica los tipos y compila con Vite a `dist/`. |
 | `npm run test` | Ejecuta las pruebas (Vitest). |
 
 ## Estructura
