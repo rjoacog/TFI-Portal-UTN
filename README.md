@@ -119,7 +119,8 @@ cd backend
 npm install
 cp .env.example .env          # y completar usuario y contraseña en DATABASE_URL
 npm run db:migrate            # aplica las migraciones
-npm run db:seed               # primer administrador y datos de prueba
+npm run db:seed               # primer administrador
+npm run db:seed:dev           # datos ficticios de desarrollo (opcional)
 npm run dev                   # levanta la API
 ```
 
