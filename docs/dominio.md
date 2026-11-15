@@ -12,6 +12,7 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
 | Versión de token | `User.tokenVersion` | — |
 | Rol | `Role` | `STUDENT`, `TEACHER`, `ADMIN`, `DIRECTOR` |
 | Carrera | `Program` | `ACTIVE`, `INACTIVE` |
+| Sede de la carrera (texto) | `Program.location` | — |
 | Carrera del alumno | `StudentProgram` | — |
 | Materia | `Subject` | `ACTIVE`, `INACTIVE` |
 | Período lectivo | `AcademicTerm` | `year`, `term` (1 o 2) |
@@ -19,6 +20,7 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
 | Nota de aprobación | `Section.passingGrade` | entero de 1 a 10, o `null` |
 | Aula virtual | `Classroom` | — |
 | Asignación docente | `TeachingAssignment` | `LEAD` (titular), `ASSISTANT` (auxiliar) |
+| Cargo del docente en la comisión | `TeachingAssignment.position` | `LEAD`, `ASSISTANT` |
 | Inscripción | `Enrollment` | `ACTIVE`, `DROPPED` |
 | Historial de estados de la inscripción | `EnrollmentStatusChange` | — |
 | Material | `Material` | `PUBLISHED`, `WITHDRAWN` |
@@ -29,7 +31,10 @@ Este documento reúne el glosario, los nombres que se usan en el código y las r
 | Calificación | `Grade` | `value` (entero de 1 a 10), `withoutSubmission` |
 | Clase | `ClassSession` | — |
 | Registro de asistencia | `AttendanceRecord` | `PRESENT`, `ABSENT` |
-| Configuración | `Settings` | — |
+| Configuración (una sola fila, `id = 1`) | `Settings` | — |
+| Período vigente | `Settings.currentTermId` | puede ser `null` |
+| Tamaño máximo de archivo | `Settings.maxFileSizeBytes` | por defecto 10485760 (10 MB) |
+| Tipos de archivo permitidos | `Settings.allowedMimeTypes` | PDF, DOCX, ZIP, JPG y PNG |
 | Registro de auditoría | `AuditLog` | — |
 
 **Módulos de la API:** `auth`, `users`, `catalog` (oferta: carreras, materias, períodos y comisiones), `enrollments`, `classroom`, `grading`, `attendance`, `reports`.
