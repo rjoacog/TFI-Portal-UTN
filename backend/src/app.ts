@@ -6,6 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import { createAuthRouter, type LoginRateLimit } from './modules/auth/auth.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
+import { createUsersRouter } from './modules/users/users.routes.js';
 import { createOriginCheck } from './shared/auth/index.js';
 import { AppError, errorHandler, notFoundHandler } from './shared/errors/index.js';
 
@@ -70,6 +71,7 @@ export function createApp({
 
   app.use('/api/health', healthRouter);
   app.use('/api/auth', createAuthRouter({ jwtSecret, secureCookies, loginRateLimit }));
+  app.use('/api/users', createUsersRouter({ jwtSecret }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
