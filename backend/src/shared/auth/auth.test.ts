@@ -74,15 +74,15 @@ async function login(options: Parameters<typeof createUser>[0] = {}) {
 beforeEach(resetDatabase);
 
 describe('requireAuth', () => {
-  it('un pedido válido pasa y deja id, roles y mustChangePassword en el pedido', async () => {
-    const { user, cookie } = await login({ roles: [RoleName.STUDENT] });
+  it('un pedido válido pasa y deja id, role y mustChangePassword en el pedido', async () => {
+    const { user, cookie } = await login({ role: RoleName.STUDENT });
 
     const res = await request(buildApp()).get('/protected').set('Cookie', cookie);
 
     expect(res.status).toBe(200);
     expect(res.body.user).toEqual({
       id: user.id,
-      roles: ['STUDENT'],
+      role: 'STUDENT',
       mustChangePassword: false,
     });
   });
@@ -172,7 +172,7 @@ describe('mustChangePassword', () => {
 
 describe('requireRole', () => {
   it('con un rol incorrecto responde 403 FORBIDDEN', async () => {
-    const { cookie } = await login({ roles: [RoleName.STUDENT] });
+    const { cookie } = await login({ role: RoleName.STUDENT });
 
     const res = await request(buildApp()).get('/admin').set('Cookie', cookie);
 
@@ -180,8 +180,8 @@ describe('requireRole', () => {
     expect(res.body.error.code).toBe('FORBIDDEN');
   });
 
-  it('con alguno de los roles pasa', async () => {
-    const { cookie } = await login({ roles: [RoleName.STUDENT, RoleName.DIRECTOR] });
+  it('con alguno de los roles indicados pasa', async () => {
+    const { cookie } = await login({ role: RoleName.DIRECTOR });
 
     const res = await request(buildApp()).get('/admin').set('Cookie', cookie);
 
@@ -205,7 +205,7 @@ describe('assertTeachingAssignment', () => {
 
   it('un docente asignado a la comisión pasa', async () => {
     const section = await createSection();
-    const { user, cookie } = await login({ roles: [RoleName.TEACHER] });
+    const { user, cookie } = await login({ role: RoleName.TEACHER });
     await prisma.teachingAssignment.create({
       data: { userId: user.id, sectionId: section.id, position: TeachingPosition.LEAD },
     });
@@ -217,7 +217,7 @@ describe('assertTeachingAssignment', () => {
 
   it('un docente no asignado recibe 404 NOT_FOUND', async () => {
     const section = await createSection();
-    const { cookie } = await login({ roles: [RoleName.TEACHER] });
+    const { cookie } = await login({ role: RoleName.TEACHER });
 
     const res = await request(buildApp()).get(`/sections/${section.id}`).set('Cookie', cookie);
 
@@ -227,7 +227,7 @@ describe('assertTeachingAssignment', () => {
 
   it('un usuario asignado pero sin el rol docente recibe 404 NOT_FOUND', async () => {
     const section = await createSection();
-    const { user, cookie } = await login({ roles: [RoleName.STUDENT] });
+    const { user, cookie } = await login({ role: RoleName.STUDENT });
     await prisma.teachingAssignment.create({
       data: { userId: user.id, sectionId: section.id, position: TeachingPosition.ASSISTANT },
     });

@@ -1,5 +1,6 @@
 import { PrismaClient, type RoleName, type TeachingPosition } from '@prisma/client';
 import argon2 from 'argon2';
+import { buildLegajo } from '../src/shared/identity/index.js';
 import { z } from '../src/shared/validation/index.js';
 
 // Datos ficticios SOLO para desarrollo. Se puede ejecutar varias veces: cada registro
@@ -60,36 +61,40 @@ interface SectionSeed {
 }
 
 const SECTIONS: SectionSeed[] = [
-  { program: 'tup', subjectCode: 'PROG1', name: 'Comisión A', lead: 'docente1', assistant: 'docente2' },
-  { program: 'tup', subjectCode: 'MATE1', name: 'Comisión A', lead: 'docente2' },
-  { program: 'tup', subjectCode: 'BD1', name: 'Comisión A', lead: 'docente1' },
-  { program: 'tusi', subjectCode: 'RED1', name: 'Comisión A', lead: 'docente2' },
-  { program: 'tusi', subjectCode: 'SO1', name: 'Comisión A', lead: 'mixto1' },
+  { program: 'tup', subjectCode: 'PROG1', name: 'Comisión A', lead: 'doc1', assistant: 'doc2' },
+  { program: 'tup', subjectCode: 'MATE1', name: 'Comisión A', lead: 'doc2' },
+  { program: 'tup', subjectCode: 'BD1', name: 'Comisión A', lead: 'doc1' },
+  { program: 'tusi', subjectCode: 'RED1', name: 'Comisión A', lead: 'doc2' },
+  { program: 'tusi', subjectCode: 'SO1', name: 'Comisión A', lead: 'doc3' },
 ];
 
 interface UserSeed {
-  loginId: string;
+  /** Legajo: el prefijo lo pone `buildLegajo` según el rol. */
+  number: string;
+  dni: string;
   firstName: string;
   lastName: string;
-  roles: RoleName[];
+  role: RoleName;
   programs?: string[];
   disabled?: boolean;
 }
 
 const USERS: UserSeed[] = [
-  { loginId: 'docente1', firstName: 'Laura', lastName: 'Gómez', roles: ['TEACHER'] },
-  { loginId: 'docente2', firstName: 'Martín', lastName: 'Suárez', roles: ['TEACHER'] },
-  { loginId: '10001', firstName: 'Ana', lastName: 'Pérez', roles: ['STUDENT'], programs: ['tup'] },
-  { loginId: '10002', firstName: 'Bruno', lastName: 'Díaz', roles: ['STUDENT'], programs: ['tup'] },
-  { loginId: '10003', firstName: 'Camila', lastName: 'Ruiz', roles: ['STUDENT'], programs: ['tusi'] },
-  { loginId: '10004', firstName: 'Diego', lastName: 'Torres', roles: ['STUDENT'], programs: ['tusi'] },
+  { number: '1', dni: '20000001', firstName: 'Laura', lastName: 'Gómez', role: 'TEACHER' },
+  { number: '2', dni: '20000002', firstName: 'Martín', lastName: 'Suárez', role: 'TEACHER' },
+  { number: '10001', dni: '30000001', firstName: 'Ana', lastName: 'Pérez', role: 'STUDENT', programs: ['tup'] },
+  { number: '10002', dni: '30000002', firstName: 'Bruno', lastName: 'Díaz', role: 'STUDENT', programs: ['tup'] },
+  { number: '10003', dni: '30000003', firstName: 'Camila', lastName: 'Ruiz', role: 'STUDENT', programs: ['tusi'] },
+  { number: '10004', dni: '30000004', firstName: 'Diego', lastName: 'Torres', role: 'STUDENT', programs: ['tusi'] },
   // Cursa las dos carreras.
-  { loginId: '10005', firstName: 'Elena', lastName: 'Castro', roles: ['STUDENT'], programs: ['tup', 'tusi'] },
-  { loginId: 'directivo1', firstName: 'Ricardo', lastName: 'Vega', roles: ['DIRECTOR'] },
-  // Docente y alumno: para probar que nadie es docente y alumno de la misma comisión.
-  { loginId: 'mixto1', firstName: 'Julia', lastName: 'Romero', roles: ['TEACHER', 'STUDENT'], programs: ['tup'] },
+  { number: '10005', dni: '30000005', firstName: 'Elena', lastName: 'Castro', role: 'STUDENT', programs: ['tup', 'tusi'] },
+  { number: '1', dni: '40000001', firstName: 'Ricardo', lastName: 'Vega', role: 'DIRECTOR' },
+  // Una persona con dos roles: dos cuentas con el mismo DNI (`doc3` y `alu10006`). Sirven para
+  // probar que nadie es docente y alumno de la misma comisión.
+  { number: '3', dni: '50000001', firstName: 'Julia', lastName: 'Romero', role: 'TEACHER' },
+  { number: '10006', dni: '50000001', firstName: 'Julia', lastName: 'Romero', role: 'STUDENT', programs: ['tup'] },
   // Para probar el mensaje "La cuenta no está habilitada".
-  { loginId: '10099', firstName: 'Sergio', lastName: 'Baja', roles: ['STUDENT'], programs: ['tup'], disabled: true },
+  { number: '10099', dni: '30000099', firstName: 'Sergio', lastName: 'Baja', role: 'STUDENT', programs: ['tup'], disabled: true },
 ];
 
 /** Cuatrimestre actual: el 1 va de enero a julio y el 2, de agosto a diciembre. */
@@ -116,10 +121,7 @@ async function main() {
 
   const prisma = new PrismaClient();
   try {
-    // Los roles y `Settings` los inserta la primera migración.
-    const roles = new Map(
-      (await prisma.role.findMany()).map((role) => [role.name, role.id] as const),
-    );
+    // La fila de `Settings` la inserta la primera migración.
     const passwordHash = await argon2.hash(parsed.data.SEED_DEV_PASSWORD);
 
     // Carreras y materias.
@@ -149,15 +151,18 @@ async function main() {
     });
     await prisma.settings.update({ where: { id: 1 }, data: { currentTermId: academicTerm.id } });
 
-    // Usuarios, roles y carreras.
+    // Usuarios (una cuenta por legajo, con un solo rol) y carreras.
     const userIds = new Map<string, number>();
     for (const u of USERS) {
+      const loginId = buildLegajo(u.role, u.number);
       const user = await prisma.user.upsert({
-        where: { loginId: u.loginId },
+        where: { loginId },
         update: {},
         create: {
-          loginId: u.loginId,
-          email: `${u.loginId}@dev.utn-connect.test`,
+          loginId,
+          role: u.role,
+          dni: u.dni,
+          email: `${loginId}@dev.utn-connect.test`,
           firstName: u.firstName,
           lastName: u.lastName,
           passwordHash,
@@ -165,16 +170,7 @@ async function main() {
           status: u.disabled ? 'DISABLED' : 'ACTIVE',
         },
       });
-      userIds.set(u.loginId, user.id);
-      for (const roleName of u.roles) {
-        const roleId = roles.get(roleName);
-        if (roleId === undefined) throw new Error(`Falta el rol ${roleName}: aplicá las migraciones.`);
-        await prisma.userRole.upsert({
-          where: { userId_roleId: { userId: user.id, roleId } },
-          update: {},
-          create: { userId: user.id, roleId },
-        });
-      }
+      userIds.set(loginId, user.id);
       for (const key of u.programs ?? []) {
         const programId = programIds.get(key)!;
         await prisma.studentProgram.upsert({

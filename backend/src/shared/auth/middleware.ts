@@ -8,7 +8,7 @@ import { verifyToken } from './token.js';
 /** Datos del usuario autenticado que `requireAuth` deja en `req.user`. */
 export interface AuthUser {
   id: number;
-  roles: RoleName[];
+  role: RoleName;
   mustChangePassword: boolean;
 }
 
@@ -58,16 +58,16 @@ export function createRequireAuth(jwtSecret: string): RequestHandler {
       );
     }
 
-    req.user = { id: user.id, roles: user.roles, mustChangePassword: user.mustChangePassword };
+    req.user = { id: user.id, role: user.role, mustChangePassword: user.mustChangePassword };
     next();
   };
 }
 
-/** Exige que el usuario tenga alguno de los roles. Va después de `requireAuth`. */
+/** Exige que el rol del usuario esté entre los indicados. Va después de `requireAuth`. */
 export function requireRole(...roles: RoleName[]): RequestHandler {
   return (req, _res, next) => {
     if (!req.user) throw unauthenticated();
-    if (!req.user.roles.some((role) => roles.includes(role))) {
+    if (!roles.includes(req.user.role)) {
       throw new AppError(403, 'FORBIDDEN', 'No tenés permiso para realizar esta acción');
     }
     next();

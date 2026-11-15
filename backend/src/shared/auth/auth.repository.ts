@@ -10,7 +10,7 @@ export async function findUserForAuth(id: number) {
       status: true,
       tokenVersion: true,
       mustChangePassword: true,
-      roles: { select: { role: { select: { name: true } } } },
+      role: true,
     },
   });
   if (!user) return null;
@@ -19,7 +19,7 @@ export async function findUserForAuth(id: number) {
     isActive: user.status === UserStatus.ACTIVE,
     tokenVersion: user.tokenVersion,
     mustChangePassword: user.mustChangePassword,
-    roles: user.roles.map((r) => r.role.name),
+    role: user.role,
   };
 }
 

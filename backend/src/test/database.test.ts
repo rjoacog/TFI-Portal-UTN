@@ -39,22 +39,48 @@ describe('base de pruebas', () => {
   });
 
   it('rechaza un segundo usuario con el mismo loginId', async () => {
-    await createUser({ loginId: '12345', roles: [RoleName.STUDENT] });
+    await createUser({ loginId: 'alu12345', role: RoleName.STUDENT });
 
-    const error = await createUser({ loginId: '12345' }).catch((err: unknown) => err);
+    const error = await createUser({ loginId: 'alu12345' }).catch((err: unknown) => err);
 
     expect(error).toBeInstanceOf(Prisma.PrismaClientKnownRequestError);
     expect((error as Prisma.PrismaClientKnownRequestError).code).toBe('P2002');
   });
 
-  it('createUser asigna los roles pedidos', async () => {
-    const user = await createUser({ roles: [RoleName.TEACHER, RoleName.ADMIN] });
-    expect(user.roles.map((r) => r.role.name).sort()).toEqual(['ADMIN', 'TEACHER']);
+  it('createUser crea una sola cuenta con el legajo del rol y un DNI', async () => {
+    const user = await createUser({ role: RoleName.TEACHER });
+    expect(user.role).toBe(RoleName.TEACHER);
+    expect(user.loginId).toMatch(/^doc\d+$/);
+    expect(user.dni).toMatch(/^\d{8}$/);
+  });
+
+  it('rechaza una segunda cuenta con el mismo DNI y el mismo rol', async () => {
+    await createUser({ role: RoleName.STUDENT, dni: '12345678' });
+
+    const error = await createUser({ role: RoleName.STUDENT, dni: '12345678' }).catch(
+      (err: unknown) => err,
+    );
+
+    expect(error).toBeInstanceOf(Prisma.PrismaClientKnownRequestError);
+    expect((error as Prisma.PrismaClientKnownRequestError).code).toBe('P2002');
+  });
+
+  it('acepta el mismo DNI con otro rol y un correo repetido', async () => {
+    await createUser({ role: RoleName.STUDENT, dni: '12345678', email: 'persona@test.local' });
+
+    const teacher = await createUser({
+      role: RoleName.TEACHER,
+      dni: '12345678',
+      email: 'persona@test.local',
+    });
+
+    expect(teacher.role).toBe(RoleName.TEACHER);
+    expect(await prisma.user.count()).toBe(2);
   });
 });
 
 describe('resetDatabase', () => {
-  it('vacía las tablas, salvo roles y settings, y restaura settings', async () => {
+  it('vacía las tablas, salvo settings, y restaura settings', async () => {
     const term = await prisma.academicTerm.create({ data: { year: 2026, term: 1 } });
     await prisma.settings.update({
       where: { id: 1 },
@@ -66,16 +92,14 @@ describe('resetDatabase', () => {
     await prisma.subject.create({
       data: { programId: program.id, code: 'M1', name: 'Matemática' },
     });
-    await createUser({ roles: [RoleName.STUDENT] });
+    await createUser({ role: RoleName.STUDENT });
 
     await resetDatabase();
 
     expect(await prisma.user.count()).toBe(0);
-    expect(await prisma.userRole.count()).toBe(0);
     expect(await prisma.program.count()).toBe(0);
     expect(await prisma.subject.count()).toBe(0);
     expect(await prisma.academicTerm.count()).toBe(0);
-    expect(await prisma.role.count()).toBe(4);
 
     const settings = await prisma.settings.findMany();
     expect(settings).toHaveLength(1);
