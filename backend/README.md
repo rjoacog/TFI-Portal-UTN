@@ -24,6 +24,7 @@ La API las valida con Zod al iniciar (`src/shared/config/env.ts`). Si falta algu
 | `NODE_ENV` | Sí | `development`, `test` o `production`. |
 | `PORT` | No | Puerto de la API. Por defecto, `3000`. |
 | `DATABASE_URL` | Sí | Conexión a PostgreSQL (`postgresql://...`). |
+| `DATABASE_URL_TEST` | Solo para las pruebas | Misma conexión que `DATABASE_URL`, con `?schema=test` al final. La API no la valida al iniciar; las pruebas no corren si falta o no indica `schema=test`. |
 | `CORS_ORIGINS` | Sí | Orígenes permitidos, separados por comas, sin ruta ni barra final. En desarrollo, `http://localhost:5173`. |
 | `SEED_ADMIN_LOGIN_ID` | Solo para el seed | `loginId` del primer administrador. |
 | `SEED_ADMIN_EMAIL` | Solo para el seed | Correo del primer administrador. |

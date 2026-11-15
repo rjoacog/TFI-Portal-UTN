@@ -131,6 +131,14 @@ Cada evento se emite desde un único punto del servicio correspondiente. En el M
 
 ## Pruebas
 
-- **Cobertura de los issues:** cada criterio de aceptación tiene al menos una prueba. Se priorizan las pruebas de la API con Supertest, contra una base de prueba separada (`DATABASE_URL_TEST`).
+- **Cobertura de los issues:** cada criterio de aceptación tiene al menos una prueba. Se priorizan las pruebas de la API con Supertest, contra PostgreSQL, en el esquema `test` de la misma base `utn_connect` (variable `DATABASE_URL_TEST`: la misma conexión que `DATABASE_URL`, con `?schema=test`). Los datos de desarrollo quedan en el esquema `public`.
+- **Infraestructura (`backend/src/test/`):** todas las pruebas exigen `DATABASE_URL_TEST` con `schema=test`; si falta, no corren. Antes de correr, Vitest aplica las migraciones al esquema `test` (`prisma migrate deploy`) y, durante las pruebas, el cliente de Prisma apunta a ese esquema. Las pruebas no corren en paralelo porque comparten el esquema. Cada prueba que usa la base llama a `resetDatabase()`, que vacía las tablas salvo `roles` y `settings` y devuelve `settings` a sus valores iniciales; `createUser()` crea usuarios con roles.
 - **Permisos:** cada endpoint protegido tiene su prueba de permisos. Otro docente, otro alumno y un usuario sin el rol tienen que recibir el error que corresponde.
 - **Bordes de fecha:** las reglas que dependen de fechas se prueban en sus límites. Por ejemplo, el instante exacto de la fecha límite, o una baja justo antes o justo después de la fecha de una clase.
+
+### Problema conocido: Vitest falla en todos los archivos desde Git Bash (Windows)
+
+- **Síntoma:** `npm run test` falla en **todos** los archivos, sin ejecutar ninguna prueba, con `TypeError: Cannot read properties of undefined (reading 'config')` o `Vitest failed to find the current suite`. Falla igual con el repo sin cambios y con una prueba trivial.
+- **Qué lo descarta:** no es el código ni la configuración. Falla también sin `vitest.config.ts` y sin `.env`; borrar la caché de Vite (`node_modules/.vite`) y correr `npm ci` no lo arregla. Que falten carpetas `@vitest/*` en `node_modules` es normal en Vitest 5 (viene empaquetado): no es la causa.
+- **Cómo se resuelve:** correr `npm run test` desde **PowerShell** (o desde la terminal de VS Code con PowerShell). Con el mismo código pasan las 43 pruebas. Con `--pool=vmThreads` también pasan en Git Bash, pero no es el modo que usamos.
+- **Causa:** sin determinar. Algo del entorno de esa sesión de Git Bash rompe el pool por defecto (`forks`/`threads`) de Vitest; había pasado la misma sesión momentos antes. Si vuelve a pasar, probar en PowerShell **antes** de tocar código, dependencias o configuración.
