@@ -19,6 +19,9 @@ export const envSchema = z.object({
         ? 'Es obligatoria'
         : 'Tiene que ser una URL de PostgreSQL (postgresql://...)',
   }),
+  JWT_SECRET: z
+    .string({ error: 'Es obligatoria' })
+    .min(32, { error: 'Tiene que tener al menos 32 caracteres' }),
   CORS_ORIGINS: z
     .string()
     .transform((value) =>

@@ -1,9 +1,11 @@
 import './shared/validation/index.js';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import { healthRouter } from './modules/health/health.routes.js';
+import { createOriginCheck } from './shared/auth/index.js';
 import { AppError, errorHandler, notFoundHandler } from './shared/errors/index.js';
 
 /**
@@ -15,6 +17,10 @@ export const DEFAULT_RATE_LIMIT = { windowMs: 15 * 60 * 1000, limit: 1000 };
 export interface AppOptions {
   /** Orígenes permitidos para CORS (viene de `CORS_ORIGINS`). */
   corsOrigins: string[];
+  /** Secreto para firmar los tokens (viene de `JWT_SECRET`). */
+  jwtSecret: string;
+  /** Marca `Secure` en la cookie de sesión (solo en producción). */
+  secureCookies?: boolean;
   /** Permite cambiar el límite global, por ejemplo en las pruebas. */
   rateLimit?: { windowMs: number; limit: number };
 }
@@ -43,6 +49,9 @@ export function createApp({ corsOrigins, rateLimit: limits = DEFAULT_RATE_LIMIT 
     }),
   );
   app.use(express.json());
+  app.use(cookieParser());
+  // Defensa contra CSRF: va antes de las rutas.
+  app.use(createOriginCheck(corsOrigins));
 
   app.use('/api/health', healthRouter);
 
