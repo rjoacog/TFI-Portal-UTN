@@ -57,13 +57,12 @@ Cada cuenta tiene **un solo rol** y se identifica con un legajo que empieza con 
 |---|---|
 | Lenguaje | TypeScript, en modo `strict` |
 | Frontend | React, Vite, React Router y Context API. Los datos se piden con `fetch`. |
-| Backend | Node.js (versión LTS) y Express 5 |
+| Backend | Node.js 24 (LTS) y Express 5 |
 | Datos | PostgreSQL 18 (instalado localmente) y Prisma |
 | Validación | Zod, con esquemas propios en cada proyecto |
 | Autenticación | JWT en una cookie `httpOnly`, con versión de token para invalidar sesiones |
 | Pruebas | Vitest y Supertest |
 | Calidad del código | ESLint y Prettier |
-| Integración continua | GitHub Actions |
 
 El detalle técnico está en [docs/arquitectura.md](docs/arquitectura.md). El glosario y las reglas de negocio están en [docs/dominio.md](docs/dominio.md).
 
@@ -85,14 +84,14 @@ TFI-Portal-UTN/
 │     ├─ routes/
 │     └─ shared/           cliente HTTP y sesión
 ├─ docs/                   dominio y arquitectura
-└─ .github/                CI y plantillas de issues y de PR
+└─ .github/                plantillas de issues y de PR
 ```
 
 ---
 
 ## Cómo empezar
 
-Requisitos: Node.js LTS, npm y **PostgreSQL 18** instalado localmente. Todo el equipo usa la misma versión mayor (18), para que las migraciones se comporten igual en todas las máquinas.
+Requisitos: Node.js 24, npm y **PostgreSQL 18** instalado localmente. Todo el equipo usa la misma versión mayor (18), para que las migraciones se comporten igual en todas las máquinas.
 
 1. Crear la base `utn_connect`. Las pruebas usan la misma base, en el esquema `test` (se crea solo). Con `psql`:
 
@@ -156,7 +155,7 @@ Cada proyecto también tiene `npm run lint`, `npm run typecheck` y `npm run test
 - **Commits:** siguen [Conventional Commits](https://www.conventionalcommits.org/es/), en inglés. Por ejemplo, `feat(enrollments): enforce single active enrollment per subject`.
 - **Pull requests:**
   - mencionan su issue con `Closes #N`;
-  - quien lo abre puede fusionarlo, una vez que la CI esté en verde y se cumpla la lista de "terminado" de la plantilla;
+  - quien lo abre puede fusionarlo, después de correr `lint`, `typecheck`, `test` y `build` en los proyectos que cambiaron, y una vez que se cumpla la lista de "terminado" de la plantilla;
   - pedir una revisión es opcional, pero recomendable si el cambio toca autenticación, permisos o migraciones;
   - se fusionan con *squash and merge*.
 - **Secretos:** nunca se suben al repositorio el `.env` ni ninguna credencial.
@@ -165,7 +164,7 @@ Cada proyecto también tiene `npm run lint`, `npm run typecheck` y `npm run test
 
 | Etapa | Contenido | Demostración |
 |---|---|---|
-| E0 | Fundaciones: proyectos backend y frontend, base de datos, autenticación base, auditoría, archivos y CI | — |
+| E0 | Fundaciones: proyectos backend y frontend, base de datos, autenticación base, auditoría y archivos | — |
 | E1 | Acceso y usuarios | — |
 | E2 | Oferta: carreras, materias, períodos y comisiones | — |
 | E3 | Inscripción | **D1** |

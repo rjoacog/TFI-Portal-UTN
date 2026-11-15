@@ -4,7 +4,7 @@ API hecha con Node.js, Express 5 y Prisma sobre PostgreSQL. Es un proyecto indep
 
 ## Requisitos
 
-Node.js LTS, npm y PostgreSQL 18 instalado localmente.
+Node.js 24, npm y PostgreSQL 18 instalado localmente.
 
 ## Puesta en marcha
 
@@ -65,6 +65,7 @@ throw new AppError(404, 'NOT_FOUND', 'La comisión no existe');
 | `npm run dev` | Levanta la API en modo desarrollo (`tsx watch`). |
 | `npm run lint` | Revisa el estilo del código (ESLint). |
 | `npm run typecheck` | Verifica los tipos (`tsc --noEmit`). |
+| `npm run build` | Compila a `dist/`. |
 | `npm run test` | Ejecuta las pruebas (Vitest). |
 | `npm run db:migrate` | Aplica las migraciones (`prisma migrate dev`). |
 | `npm run db:seed` | Crea el primer administrador (variables `SEED_ADMIN_*`). |
