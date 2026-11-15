@@ -94,11 +94,10 @@ TFI-Portal-UTN/
 
 Requisitos: Node.js LTS, npm y **PostgreSQL 18** instalado localmente. Todo el equipo usa la misma versión mayor (18), para que las migraciones se comporten igual en todas las máquinas.
 
-1. Crear la base de desarrollo `utn_connect` (y, para las pruebas, `utn_connect_test`). Con `psql`:
+1. Crear la base `utn_connect`. Las pruebas usan la misma base, en el esquema `test` (se crea solo). Con `psql`:
 
 ```bash
 psql -U postgres -c "CREATE DATABASE utn_connect;"
-psql -U postgres -c "CREATE DATABASE utn_connect_test;"
 # para comprobar la conexión:
 psql -U postgres -d utn_connect -c "SELECT version();"
 ```
