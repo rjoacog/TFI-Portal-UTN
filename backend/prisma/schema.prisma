@@ -6,3 +6,228 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// Convenciones: ver issue #6. Las claves foráneas son siempre `onDelete: Restrict`
+// (no se borran datos: las bajas se hacen por estado). Los rangos (cuatrimestre,
+// nota de aprobación) se validan con Zod en el servicio, no con CHECK en la base.
+
+// ───────────────────────── Enums ─────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+
+  @@map("user_status")
+}
+
+enum RoleName {
+  STUDENT
+  TEACHER
+  ADMIN
+  DIRECTOR
+
+  @@map("role_name")
+}
+
+enum ProgramStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("program_status")
+}
+
+enum SubjectStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("subject_status")
+}
+
+enum SectionStatus {
+  OPEN
+  CLOSED
+
+  @@map("section_status")
+}
+
+enum TeachingPosition {
+  LEAD
+  ASSISTANT
+
+  @@map("teaching_position")
+}
+
+// ───────────────────────── Identidad ─────────────────────────
+
+model User {
+  id                 Int        @id @default(autoincrement())
+  /// Identificador de acceso. En el caso del alumno es el legajo.
+  loginId            String     @unique @map("login_id")
+  firstName          String     @map("first_name")
+  lastName           String     @map("last_name")
+  email              String     @unique
+  passwordHash       String     @map("password_hash")
+  mustChangePassword Boolean    @default(true) @map("must_change_password")
+  tokenVersion       Int        @default(0) @map("token_version")
+  status             UserStatus @default(ACTIVE)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
+
+  roles               UserRole[]
+  programs            StudentProgram[]
+  teachingAssignments TeachingAssignment[]
+
+  @@map("users")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      RoleName @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  roleId    Int      @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model StudentProgram {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  programId Int      @map("program_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  program Program @relation(fields: [programId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, programId])
+  @@map("student_programs")
+}
+
+// ───────────────────────── Oferta ─────────────────────────
+
+model Program {
+  id        Int           @id @default(autoincrement())
+  name      String
+  /// La sede, en texto.
+  location  String
+  status    ProgramStatus @default(ACTIVE)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  subjects Subject[]
+  students StudentProgram[]
+
+  @@map("programs")
+}
+
+model Subject {
+  id        Int           @id @default(autoincrement())
+  programId Int           @map("program_id")
+  code      String
+  name      String
+  status    SubjectStatus @default(ACTIVE)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  program  Program   @relation(fields: [programId], references: [id], onDelete: Restrict)
+  sections Section[]
+
+  @@unique([programId, code])
+  @@map("subjects")
+}
+
+model AcademicTerm {
+  id        Int      @id @default(autoincrement())
+  year      Int
+  /// Cuatrimestre: 1 o 2 (se valida en el servicio).
+  term      Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  sections Section[]
+  settings Settings[]
+
+  @@unique([year, term])
+  @@map("academic_terms")
+}
+
+model Section {
+  id           Int           @id @default(autoincrement())
+  subjectId    Int           @map("subject_id")
+  termId       Int           @map("term_id")
+  name         String
+  status       SectionStatus @default(OPEN)
+  /// Nota de aprobación (1 a 10, se valida en el servicio). Nula si no se definió.
+  passingGrade Int?          @map("passing_grade")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  subject             Subject              @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  term                AcademicTerm         @relation(fields: [termId], references: [id], onDelete: Restrict)
+  classroom           Classroom?
+  teachingAssignments TeachingAssignment[]
+
+  @@unique([subjectId, termId, name])
+  @@map("sections")
+}
+
+model Classroom {
+  id        Int      @id @default(autoincrement())
+  /// Un aula por comisión.
+  sectionId Int      @unique @map("section_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+
+  @@map("classrooms")
+}
+
+model TeachingAssignment {
+  id        Int              @id @default(autoincrement())
+  /// El docente.
+  userId    Int              @map("user_id")
+  sectionId Int              @map("section_id")
+  position  TeachingPosition
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, sectionId])
+  @@map("teaching_assignments")
+}
+
+// ───────────────────────── Soporte ─────────────────────────
+
+/// Una sola fila: `id` fijo en 1, sin autoincremental. La inserta la migración.
+model Settings {
+  id               Int      @id @default(1)
+  /// Período vigente. Nulo hasta que se configure.
+  currentTermId    Int?     @map("current_term_id")
+  maxFileSizeBytes Int      @map("max_file_size_bytes")
+  allowedMimeTypes String[] @map("allowed_mime_types")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  currentTerm AcademicTerm? @relation(fields: [currentTermId], references: [id], onDelete: Restrict)
+
+  @@map("settings")
+}

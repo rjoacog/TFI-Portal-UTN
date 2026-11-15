@@ -25,6 +25,11 @@ La API las valida con Zod al iniciar (`src/shared/config/env.ts`). Si falta algu
 | `PORT` | No | Puerto de la API. Por defecto, `3000`. |
 | `DATABASE_URL` | Sí | Conexión a PostgreSQL (`postgresql://...`). |
 | `CORS_ORIGINS` | Sí | Orígenes permitidos, separados por comas, sin ruta ni barra final. En desarrollo, `http://localhost:5173`. |
+| `SEED_ADMIN_LOGIN_ID` | Solo para el seed | `loginId` del primer administrador. |
+| `SEED_ADMIN_EMAIL` | Solo para el seed | Correo del primer administrador. |
+| `SEED_ADMIN_PASSWORD` | Solo para el seed | Contraseña temporal del primer administrador (al menos 8 caracteres). Queda con `mustChangePassword = true`. |
+
+`npm run db:seed` valida las tres con Zod, crea el usuario con el rol `ADMIN` (nombre fijo "Administrador Sistema", que se cambia después desde el perfil) y, si ya existe un usuario con ese `loginId`, no lo duplica. Los roles y la fila de `Settings` los carga la primera migración.
 
 ## Errores
 
@@ -43,7 +48,7 @@ throw new AppError(404, 'NOT_FOUND', 'La comisión no existe');
 | `npm run typecheck` | Verifica los tipos (`tsc --noEmit`). |
 | `npm run test` | Ejecuta las pruebas (Vitest). |
 | `npm run db:migrate` | Aplica las migraciones (`prisma migrate dev`). |
-| `npm run db:seed` | Carga el primer administrador y datos de prueba. |
+| `npm run db:seed` | Crea el primer administrador (variables `SEED_ADMIN_*`). |
 
 ## Estructura
 
