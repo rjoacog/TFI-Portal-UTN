@@ -3,11 +3,18 @@ import { signToken } from '../../shared/auth/index.js';
 import { AppError } from '../../shared/errors/index.js';
 import { normalizeLegajo } from '../../shared/identity/index.js';
 import {
+  findPasswordHashById,
   findPublicUserById,
   findUserByLoginId,
   incrementTokenVersion,
+  runInTransaction,
 } from './auth.repository.js';
-import { hashPassword, verifyPassword } from './password.service.js';
+import {
+  hashPassword,
+  setPassword,
+  validateNewPassword,
+  verifyPassword,
+} from './password.service.js';
 
 /** Usuario tal como lo devuelve la API de sesión. */
 export interface SessionUser {
@@ -74,6 +81,33 @@ export async function login(
  */
 export async function logout(userId: number): Promise<void> {
   await incrementTokenVersion(userId);
+}
+
+/**
+ * Cambio de contraseña propio (CU-03), obligatorio o voluntario. Verifica la actual, aplica la
+ * política y escribe con `setPassword` (regla 7). Devuelve el usuario y un token con el
+ * `tokenVersion` nuevo: las otras sesiones se cierran, la actual sigue con la cookie nueva (E1-2).
+ */
+export async function changePassword(
+  userId: number,
+  input: { currentPassword: string; newPassword: string },
+  jwtSecret: string,
+): Promise<{ user: SessionUser; token: string }> {
+  const currentHash = await findPasswordHashById(userId);
+  if (!currentHash)
+    throw new AppError(401, 'UNAUTHENTICATED', 'Tenés que iniciar sesión para continuar');
+
+  if (!(await verifyPassword(currentHash, input.currentPassword))) {
+    throw new AppError(400, 'INVALID_CURRENT_PASSWORD', 'La contraseña actual no es correcta');
+  }
+  await validateNewPassword(input.newPassword, currentHash);
+
+  const tokenVersion = await runInTransaction((tx) =>
+    setPassword(tx, userId, input.newPassword, { mustChangePassword: false }),
+  );
+
+  const user = await getCurrentUser(userId);
+  return { user, token: signToken({ sub: userId, tv: tokenVersion }, jwtSecret) };
 }
 
 /** Datos del usuario de la sesión actual. */
