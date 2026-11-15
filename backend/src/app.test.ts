@@ -5,7 +5,7 @@ import { createApp } from './app.js';
 const ALLOWED_ORIGIN = 'http://localhost:5173';
 
 function buildApp(rateLimit?: { windowMs: number; limit: number }) {
-  return createApp({ corsOrigins: [ALLOWED_ORIGIN], rateLimit });
+  return createApp({ corsOrigins: [ALLOWED_ORIGIN], jwtSecret: 'x'.repeat(32), rateLimit });
 }
 
 describe('GET /api/health', () => {

@@ -22,6 +22,7 @@ describe('arranque de la API', () => {
     const result = startServer({
       NODE_ENV: 'development',
       DATABASE_URL: 'postgresql://usuario:clave@localhost:5432/utn_connect',
+      JWT_SECRET: 'x'.repeat(32),
       CORS_ORIGINS: 'no-es-un-origen',
     });
 
@@ -29,4 +30,24 @@ describe('arranque de la API', () => {
     expect(result.stderr).toContain('CORS_ORIGINS');
     expect(result.stdout).not.toContain('API escuchando');
   }, 30_000);
+
+  it.each([
+    ['falta JWT_SECRET', ''],
+    ['JWT_SECRET tiene menos de 32 caracteres', 'x'.repeat(31)],
+  ])(
+    'no arranca si %s',
+    (_caso, secret) => {
+      const result = startServer({
+        NODE_ENV: 'development',
+        DATABASE_URL: 'postgresql://usuario:clave@localhost:5432/utn_connect',
+        CORS_ORIGINS: 'http://localhost:5173',
+        JWT_SECRET: secret,
+      });
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('JWT_SECRET');
+      expect(result.stdout).not.toContain('API escuchando');
+    },
+    30_000,
+  );
 });

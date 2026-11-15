@@ -5,6 +5,7 @@ const VALID = {
   NODE_ENV: 'development',
   PORT: '3000',
   DATABASE_URL: 'postgresql://usuario:clave@localhost:5432/utn_connect',
+  JWT_SECRET: 'x'.repeat(32),
   CORS_ORIGINS: 'http://localhost:5173',
 };
 
@@ -25,6 +26,7 @@ describe('parseEnv', () => {
       NODE_ENV: 'development',
       PORT: 3000,
       DATABASE_URL: VALID.DATABASE_URL,
+      JWT_SECRET: VALID.JWT_SECRET,
       CORS_ORIGINS: ['http://localhost:5173'],
     });
   });
@@ -34,7 +36,19 @@ describe('parseEnv', () => {
 
     expect(message).toContain('NODE_ENV');
     expect(message).toContain('DATABASE_URL');
+    expect(message).toContain('JWT_SECRET');
     expect(message).toContain('CORS_ORIGINS');
+  });
+
+  describe('JWT_SECRET', () => {
+    it('es obligatoria', () => {
+      expect(envError({ ...VALID, JWT_SECRET: undefined })).toContain('JWT_SECRET');
+    });
+
+    it('tiene que tener al menos 32 caracteres', () => {
+      expect(envError({ ...VALID, JWT_SECRET: 'x'.repeat(31) })).toContain('JWT_SECRET');
+      expect(parseEnv({ ...VALID, JWT_SECRET: 'x'.repeat(32) }).JWT_SECRET).toHaveLength(32);
+    });
   });
 
   describe('NODE_ENV', () => {

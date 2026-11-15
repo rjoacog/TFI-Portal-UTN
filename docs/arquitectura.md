@@ -77,7 +77,11 @@ Los servicios y las rutas lanzan `AppError(status, code, message)` de `backend/s
 | `ZodError` (validación de la entrada) | 400 | `VALIDATION_ERROR` |
 | Cuerpo que no es un JSON válido | 400 | `INVALID_JSON` |
 | Cuerpo demasiado grande | 413 | `PAYLOAD_TOO_LARGE` |
-| Ruta inexistente | 404 | `NOT_FOUND` |
+| Ruta inexistente, o recurso de una comisión a la que el usuario no pertenece | 404 | `NOT_FOUND` |
+| Sin sesión: falta la cookie, el token es inválido o venció, `tv` no coincide con `tokenVersion` o el usuario está desactivado | 401 | `UNAUTHENTICATED` |
+| El usuario tiene `mustChangePassword` y la ruta no está permitida | 403 | `PASSWORD_CHANGE_REQUIRED` |
+| El usuario no tiene el rol que pide la ruta | 403 | `FORBIDDEN` |
+| Pedido que modifica datos con una cabecera `Origin` fuera de `CORS_ORIGINS` | 403 | `FORBIDDEN_ORIGIN` |
 | Límite global de pedidos superado | 429 | `TOO_MANY_REQUESTS` |
 | Cualquier otro error | 500 | `INTERNAL_ERROR` (se registra en el log; al cliente no se le expone el detalle) |
 

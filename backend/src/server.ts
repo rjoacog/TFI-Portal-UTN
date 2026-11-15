@@ -25,7 +25,11 @@ function loadEnvOrExit(): Env {
 
 loadDotEnvFile();
 const env = loadEnvOrExit();
-const app = createApp({ corsOrigins: env.CORS_ORIGINS });
+const app = createApp({
+  corsOrigins: env.CORS_ORIGINS,
+  jwtSecret: env.JWT_SECRET,
+  secureCookies: env.NODE_ENV === 'production',
+});
 
 app.listen(env.PORT, () => {
   console.log(`API escuchando en el puerto ${env.PORT} (${env.NODE_ENV})`);
