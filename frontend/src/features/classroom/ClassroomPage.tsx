@@ -351,6 +351,7 @@ export function ClassroomPage() {
                 Nota: {activity.myGrade.value}
                 {activity.myGrade.withoutSubmission ? ' (sin entrega)' : ''}
                 {activity.myGrade.approved === null ? '' : activity.myGrade.approved ? ' · aprobada' : ' · no aprobada'}
+                {activity.myGrade.observation ? ` · ${activity.myGrade.observation}` : ''}
               </span>
             )}
             {data.canSubmit && activity.type === 'ASSIGNMENT' && activity.status === 'PUBLISHED' && activity.mySubmission?.status !== 'GRADED' && !activity.myGrade && (

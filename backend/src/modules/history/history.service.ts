@@ -49,6 +49,7 @@ export async function getAcademicHistory(actor: AuthUser, studentId = actor.id) 
           title: activity.title,
           type: activity.type,
           value: grade.value,
+          observation: grade.observation,
           withoutSubmission: grade.withoutSubmission,
           approved: passing === null ? null : grade.value >= passing,
         })),

@@ -29,7 +29,11 @@ export function createReportsRouter({ jwtSecret }: { jwtSecret: string }) {
       'Apellido',
       'Nombre',
       'Inscripción',
-      ...sheet.activities.flatMap((activity) => [`${activity.title} entrega`, `${activity.title} nota`]),
+      ...sheet.activities.flatMap((activity) => [
+        `${activity.title} entrega`,
+        `${activity.title} nota`,
+        `${activity.title} observación`,
+      ]),
       'Asistencia',
     ];
     const rows = sheet.rows.map((row) => [
@@ -46,6 +50,7 @@ export function createReportsRouter({ jwtSecret }: { jwtSecret: string }) {
               ? 'Tarde'
               : 'Calificada',
         cell.grade === null ? '' : cell.withoutSubmission ? `${cell.grade} (sin entrega)` : String(cell.grade),
+        cell.observation,
       ]),
       row.attendance.label,
     ]);
@@ -55,13 +60,13 @@ export function createReportsRouter({ jwtSecret }: { jwtSecret: string }) {
   router.get('/history.csv', requireAuth, requireRole(RoleName.STUDENT), async (req, res) => {
     const history = await getAcademicHistory(req.user!);
     const rows: (string | number | null)[][] = [
-      ['Materia', 'Comisión', 'Período', 'Inscripción', 'Actividad', 'Nota', 'Aprobada', 'Asistencia'],
+      ['Materia', 'Comisión', 'Período', 'Inscripción', 'Actividad', 'Nota', 'Observación', 'Aprobada', 'Asistencia'],
     ];
     for (const item of history) {
       const period = `${item.term.year} C${item.term.term}`;
       const status = item.status === 'ACTIVE' ? 'Activa' : 'Baja';
       if (item.grades.length === 0) {
-        rows.push([item.subject.name, item.section.name, period, status, '', '', '', item.attendance.label]);
+        rows.push([item.subject.name, item.section.name, period, status, '', '', '', '', item.attendance.label]);
       }
       for (const grade of item.grades) {
         rows.push([
@@ -71,6 +76,7 @@ export function createReportsRouter({ jwtSecret }: { jwtSecret: string }) {
           status,
           grade.title,
           grade.withoutSubmission ? `${grade.value} (sin entrega)` : String(grade.value),
+          grade.observation,
           grade.approved === null ? '' : grade.approved ? 'Sí' : 'No',
           item.attendance.label,
         ]);

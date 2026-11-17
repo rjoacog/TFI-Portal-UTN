@@ -10,7 +10,14 @@ interface HistoryItem {
   subject: { code: string; name: string };
   term: { year: number; term: number };
   attendance: { label: string };
-  grades: { title: string; value: number; withoutSubmission: boolean; approved: boolean | null }[];
+  grades: {
+    activityId: number;
+    title: string;
+    value: number;
+    observation: string | null;
+    withoutSubmission: boolean;
+    approved: boolean | null;
+  }[];
 }
 
 export function HistoryPage() {
@@ -36,10 +43,11 @@ export function HistoryPage() {
           <Link to={`/sections/${item.section.id}`}>Ver el aula</Link>
           <ul>
             {item.grades.map((grade) => (
-              <li key={grade.title}>
+              <li key={grade.activityId}>
                 {grade.title}: {grade.value}
                 {grade.withoutSubmission ? ' (sin entrega)' : ''}
                 {grade.approved === null ? '' : grade.approved ? ' · aprobada' : ' · no aprobada'}
+                {grade.observation ? ` · ${grade.observation}` : ''}
               </li>
             ))}
           </ul>
