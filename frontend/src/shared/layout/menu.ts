@@ -20,13 +20,27 @@ const COMMON_ITEMS: MenuItem[] = [
 ];
 
 /**
- * Opciones de la pantalla de inicio de cada rol. Cada etapa suma las suyas
- * (por ejemplo, *Usuarios* para el administrador en CU-05).
+ * Opciones de la pantalla de inicio de cada rol.
  */
 export const ROLE_MENU: Record<Role, MenuItem[]> = {
-  STUDENT: [...COMMON_ITEMS],
-  TEACHER: [...COMMON_ITEMS],
-  ADMIN: [...COMMON_ITEMS],
+  STUDENT: [
+    { to: '/offer', label: 'Oferta', description: 'Comisiones abiertas del período vigente.' },
+    { to: '/history', label: 'Historial', description: 'Tus notas y tu asistencia.' },
+    ...COMMON_ITEMS,
+  ],
+  TEACHER: [
+    { to: '/teaching', label: 'Mis comisiones', description: 'El aula de las comisiones que tenés asignadas.' },
+    ...COMMON_ITEMS,
+  ],
+  ADMIN: [
+    { to: '/users', label: 'Usuarios', description: 'Altas, estados y contraseñas.' },
+    { to: '/programs', label: 'Carreras', description: 'Carreras de la oferta.' },
+    { to: '/subjects', label: 'Materias', description: 'Materias de cada carrera.' },
+    { to: '/terms', label: 'Períodos', description: 'Años y cuatrimestres.' },
+    { to: '/sections', label: 'Comisiones', description: 'Abrir y cerrar comisiones.' },
+    { to: '/settings', label: 'Parámetros', description: 'Período vigente y archivos.' },
+    ...COMMON_ITEMS,
+  ],
   // El directivo no tiene pantallas propias en la versión 1.
   DIRECTOR: [...COMMON_ITEMS],
 };

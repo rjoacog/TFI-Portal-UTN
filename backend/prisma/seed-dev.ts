@@ -206,6 +206,33 @@ async function main() {
       }
     }
 
+    // Una inscripción de ejemplo para poder entrar al aula apenas se cargan los datos.
+    const sampleSection = await prisma.section.findFirst({
+      where: { name: 'Comisión A', termId: academicTerm.id, subject: { code: 'PROG1' } },
+    });
+    const sampleStudentId = userIds.get('alu10001');
+    if (sampleSection && sampleStudentId) {
+      const already = await prisma.enrollment.findUnique({
+        where: { userId_sectionId: { userId: sampleStudentId, sectionId: sampleSection.id } },
+      });
+      if (!already) {
+        const now = new Date();
+        await prisma.enrollment.create({
+          data: {
+            userId: sampleStudentId,
+            sectionId: sampleSection.id,
+            subjectId: sampleSection.subjectId,
+            termId: sampleSection.termId,
+            status: 'ACTIVE',
+            enrolledAt: now,
+            changes: {
+              create: { status: 'ACTIVE', changedAt: now, actorId: sampleStudentId },
+            },
+          },
+        });
+      }
+    }
+
     console.log(
       `Datos de prueba listos: ${PROGRAMS.length} carreras, período ${year}-C${term}, ` +
         `${SECTIONS.length} comisiones y ${USERS.length} usuarios.`,

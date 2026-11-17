@@ -35,6 +35,7 @@ const LOGIN_PATH = '/api/auth/login';
 interface RequestOptions {
   method?: string;
   body?: unknown;
+  form?: FormData;
   signal?: AbortSignal;
 }
 
@@ -58,13 +59,10 @@ function toApiError(status: number, payload: unknown): ApiError {
   );
 }
 
-/** Único lugar desde donde la web llama a la API. `path` es relativo: `/api/...`. */
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, signal } = options;
-
-  let res: Response;
+async function send(path: string, options: RequestOptions = {}): Promise<Response> {
+  const { method = 'GET', body, form, signal } = options;
   try {
-    res = await fetch(path, {
+    return await fetch(path, {
       method,
       credentials: 'include',
       signal,
@@ -72,7 +70,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
         Accept: 'application/json',
         ...(body !== undefined && { 'Content-Type': 'application/json' }),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
     });
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
@@ -82,6 +80,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       'No hay conexión con el servidor. Revisá tu conexión a internet.',
     );
   }
+}
+
+/** Único lugar desde donde la web llama a la API. `path` es relativo: `/api/...`. */
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const res = await send(path, options);
 
   let payload: unknown;
   try {
@@ -107,10 +110,34 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return payload as T;
 }
 
+/** Descarga un archivo que exige sesión. */
+export async function downloadFile(path: string, filename: string) {
+  const res = await send(path);
+  if (!res.ok) {
+    let payload: unknown;
+    try {
+      payload = await parseJson(res);
+    } catch {
+      payload = undefined;
+    }
+    const error = toApiError(res.status, payload);
+    if (res.status === 401) unauthorizedHandler?.();
+    throw error;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => apiRequest<T>(path, { signal }),
   post: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'POST', body }),
   put: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'PUT', body }),
   patch: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'PATCH', body }),
   delete: <T>(path: string) => apiRequest<T>(path, { method: 'DELETE' }),
+  postForm: <T>(path: string, form: FormData) => apiRequest<T>(path, { method: 'POST', form }),
 };

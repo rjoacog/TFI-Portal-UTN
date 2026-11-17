@@ -4,11 +4,19 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
+import { createAttendanceRouter } from './modules/attendance/attendance.routes.js';
 import { createAuthRouter, type LoginRateLimit } from './modules/auth/auth.routes.js';
+import { createCatalogRouter } from './modules/catalog/catalog.routes.js';
+import { createClassroomRouter } from './modules/classroom/classroom.routes.js';
+import { createEnrollmentsRouter } from './modules/enrollments/enrollments.routes.js';
+import { createGradingRouter } from './modules/grading/grading.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
+import { createHistoryRouter } from './modules/history/history.routes.js';
+import { createReportsRouter } from './modules/reports/reports.routes.js';
 import { createUsersRouter } from './modules/users/users.routes.js';
 import { createOriginCheck } from './shared/auth/index.js';
 import { AppError, errorHandler, notFoundHandler } from './shared/errors/index.js';
+import { LocalFileStorage, defaultStorageRoot, type FileStorage } from './shared/storage/index.js';
 
 /**
  * Límite global de pedidos por IP.
@@ -27,6 +35,8 @@ export interface AppOptions {
   rateLimit?: { windowMs: number; limit: number };
   /** Permite cambiar el límite de intentos fallidos de inicio de sesión (E1-1). */
   loginRateLimit?: LoginRateLimit;
+  /** Dónde se guardan los archivos. En las pruebas se usa una carpeta temporal. */
+  storage?: FileStorage;
 }
 
 /** Crea la aplicación sin levantar el servidor, para poder probarla con Supertest. */
@@ -36,6 +46,7 @@ export function createApp({
   secureCookies = false,
   rateLimit: limits = DEFAULT_RATE_LIMIT,
   loginRateLimit,
+  storage = new LocalFileStorage(defaultStorageRoot()),
 }: AppOptions) {
   const app: Express = express();
 
@@ -72,6 +83,13 @@ export function createApp({
   app.use('/api/health', healthRouter);
   app.use('/api/auth', createAuthRouter({ jwtSecret, secureCookies, loginRateLimit }));
   app.use('/api/users', createUsersRouter({ jwtSecret }));
+  app.use('/api', createCatalogRouter({ jwtSecret }));
+  app.use('/api', createEnrollmentsRouter({ jwtSecret }));
+  app.use('/api', createClassroomRouter({ jwtSecret, storage }));
+  app.use('/api', createGradingRouter({ jwtSecret }));
+  app.use('/api', createAttendanceRouter({ jwtSecret }));
+  app.use('/api', createHistoryRouter({ jwtSecret }));
+  app.use('/api', createReportsRouter({ jwtSecret }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

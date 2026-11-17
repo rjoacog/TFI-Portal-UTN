@@ -57,6 +57,65 @@ enum TeachingPosition {
   @@map("teaching_position")
 }
 
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+
+  @@map("enrollment_status")
+}
+
+enum ContentStatus {
+  PUBLISHED
+  WITHDRAWN
+
+  @@map("content_status")
+}
+
+enum ActivityType {
+  ASSIGNMENT
+  ASSESSMENT
+
+  @@map("activity_type")
+}
+
+enum ActivityStatus {
+  PUBLISHED
+  CLOSED
+
+  @@map("activity_status")
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+
+  @@map("submission_status")
+}
+
+enum Timeliness {
+  ON_TIME
+  LATE
+
+  @@map("timeliness")
+}
+
+enum AttendanceValue {
+  PRESENT
+  ABSENT
+
+  @@map("attendance_value")
+}
+
+enum AuditObject {
+  GRADE
+  PASSING_GRADE
+  ENROLLMENT
+  USER
+  ATTENDANCE
+
+  @@map("audit_object")
+}
+
 // ───────────────────────── Identidad ─────────────────────────
 
 model User {
@@ -78,8 +137,20 @@ model User {
   createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
 
-  programs            StudentProgram[]
-  teachingAssignments TeachingAssignment[]
+  programs             StudentProgram[]
+  teachingAssignments  TeachingAssignment[]
+  enrollments          Enrollment[]
+  enrollmentChanges    EnrollmentStatusChange[]
+  materials            Material[]
+  announcements        Announcement[]
+  activities           Activity[]
+  submissions          Submission[]
+  grades               Grade[]                @relation("GradeStudent")
+  gradesGiven          Grade[]                @relation("GradeTeacher")
+  classSessions        ClassSession[]
+  attendanceRecords    AttendanceRecord[]
+  uploadedAttachments  Attachment[]
+  auditLogs            AuditLog[]
 
   @@unique([dni, role])
   @@map("users")
@@ -125,8 +196,9 @@ model Subject {
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
 
-  program  Program   @relation(fields: [programId], references: [id], onDelete: Restrict)
-  sections Section[]
+  program     Program      @relation(fields: [programId], references: [id], onDelete: Restrict)
+  sections    Section[]
+  enrollments Enrollment[]
 
   @@unique([programId, code])
   @@map("subjects")
@@ -140,8 +212,9 @@ model AcademicTerm {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  sections Section[]
-  settings Settings[]
+  sections    Section[]
+  settings    Settings[]
+  enrollments Enrollment[]
 
   @@unique([year, term])
   @@map("academic_terms")
@@ -162,6 +235,8 @@ model Section {
   term                AcademicTerm         @relation(fields: [termId], references: [id], onDelete: Restrict)
   classroom           Classroom?
   teachingAssignments TeachingAssignment[]
+  enrollments         Enrollment[]
+  classSessions       ClassSession[]
 
   @@unique([subjectId, termId, name])
   @@map("sections")
@@ -174,7 +249,10 @@ model Classroom {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  section Section @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  section       Section        @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  materials     Material[]
+  announcements Announcement[]
+  activities    Activity[]
 
   @@map("classrooms")
 }
@@ -210,4 +288,217 @@ model Settings {
   currentTerm AcademicTerm? @relation(fields: [currentTermId], references: [id], onDelete: Restrict)
 
   @@map("settings")
+}
+
+// ───────────────────────── Inscripción ─────────────────────────
+
+model Enrollment {
+  id         Int              @id @default(autoincrement())
+  userId     Int              @map("user_id")
+  sectionId  Int              @map("section_id")
+  /// Copiados de la comisión al inscribir. Habilitan el índice único parcial de una activa por materia y período.
+  subjectId  Int              @map("subject_id")
+  termId     Int              @map("term_id")
+  status     EnrollmentStatus
+  enrolledAt DateTime         @map("enrolled_at") @db.Timestamptz()
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user     User                     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  section  Section                  @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  subject  Subject                  @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  term     AcademicTerm             @relation(fields: [termId], references: [id], onDelete: Restrict)
+  changes  EnrollmentStatusChange[]
+  records  AttendanceRecord[]
+
+  @@unique([userId, sectionId])
+  @@index([userId, subjectId, termId])
+  @@map("enrollments")
+}
+
+model EnrollmentStatusChange {
+  id           Int              @id @default(autoincrement())
+  enrollmentId Int              @map("enrollment_id")
+  status       EnrollmentStatus
+  changedAt    DateTime         @map("changed_at") @db.Timestamptz()
+  actorId      Int              @map("actor_id")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  actor      User       @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([enrollmentId, changedAt])
+  @@map("enrollment_status_changes")
+}
+
+// ───────────────────────── Aula ─────────────────────────
+
+model Material {
+  id          Int           @id @default(autoincrement())
+  classroomId Int           @map("classroom_id")
+  authorId    Int           @map("author_id")
+  title       String
+  description String
+  publishedAt DateTime      @map("published_at") @db.Timestamptz()
+  status      ContentStatus @default(PUBLISHED)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  classroom   Classroom    @relation(fields: [classroomId], references: [id], onDelete: Restrict)
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  attachments Attachment[]
+
+  @@map("materials")
+}
+
+model Announcement {
+  id          Int           @id @default(autoincrement())
+  classroomId Int           @map("classroom_id")
+  authorId    Int           @map("author_id")
+  title       String
+  body        String
+  publishedAt DateTime      @map("published_at") @db.Timestamptz()
+  status      ContentStatus @default(PUBLISHED)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Restrict)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@map("announcements")
+}
+
+model Activity {
+  id          Int            @id @default(autoincrement())
+  classroomId Int            @map("classroom_id")
+  authorId    Int            @map("author_id")
+  type        ActivityType
+  title       String
+  description String
+  status      ActivityStatus @default(PUBLISHED)
+  /// Solo los trabajos prácticos. La restricción está en SQL manual de la migración.
+  dueAt       DateTime?      @map("due_at") @db.Timestamptz()
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  classroom   Classroom    @relation(fields: [classroomId], references: [id], onDelete: Restrict)
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  attachments Attachment[]
+  submissions Submission[]
+  grades      Grade[]
+
+  @@map("activities")
+}
+
+model Submission {
+  id          Int              @id @default(autoincrement())
+  activityId  Int              @map("activity_id")
+  userId      Int              @map("user_id")
+  submittedAt DateTime         @map("submitted_at") @db.Timestamptz()
+  timeliness  Timeliness
+  status      SubmissionStatus @default(SUBMITTED)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+
+  activity   Activity    @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  attachment Attachment?
+
+  @@unique([activityId, userId])
+  @@map("submissions")
+}
+
+model Grade {
+  id                 Int      @id @default(autoincrement())
+  activityId         Int      @map("activity_id")
+  userId             Int      @map("user_id")
+  value              Int
+  observation        String?
+  teacherId          Int      @map("teacher_id")
+  gradedAt           DateTime @map("graded_at") @db.Timestamptz()
+  withoutSubmission  Boolean  @map("without_submission")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  student  User     @relation("GradeStudent", fields: [userId], references: [id], onDelete: Restrict)
+  teacher  User     @relation("GradeTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+
+  @@unique([activityId, userId])
+  @@map("grades")
+}
+
+/// Un archivo cuelga de exactamente un dueño. El CHECK está en SQL manual de la migración.
+model Attachment {
+  id           Int      @id @default(autoincrement())
+  materialId   Int?     @map("material_id")
+  activityId   Int?     @map("activity_id")
+  submissionId Int?     @unique @map("submission_id")
+  fileName     String   @map("file_name")
+  mimeType     String   @map("mime_type")
+  sizeBytes    Int      @map("size_bytes")
+  uploadedById Int      @map("uploaded_by_id")
+  storageKey   String   @unique @map("storage_key")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  material   Material?   @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  activity   Activity?   @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  submission Submission? @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  uploadedBy User        @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@map("attachments")
+}
+
+// ───────────────────────── Asistencia ─────────────────────────
+
+model ClassSession {
+  id           Int      @id @default(autoincrement())
+  sectionId    Int      @map("section_id")
+  /// Solo fecha, sin hora.
+  date         DateTime @db.Date
+  recordedById Int      @map("recorded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  section    Section            @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  recordedBy User               @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  records    AttendanceRecord[]
+
+  @@unique([sectionId, date])
+  @@map("class_sessions")
+}
+
+model AttendanceRecord {
+  id             Int             @id @default(autoincrement())
+  classSessionId Int             @map("class_session_id")
+  userId         Int             @map("user_id")
+  enrollmentId   Int             @map("enrollment_id")
+  value          AttendanceValue
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  classSession ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Restrict)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+
+  @@unique([classSessionId, userId])
+  @@map("attendance_records")
+}
+
+// ───────────────────────── Auditoría ─────────────────────────
+
+model AuditLog {
+  id            Int         @id @default(autoincrement())
+  actorId       Int         @map("actor_id")
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  objectType    AuditObject @map("object_type")
+  objectId      Int         @map("object_id")
+  field         String
+  previousValue String?     @map("previous_value")
+  newValue      String?     @map("new_value")
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([objectType, objectId])
+  @@map("audit_logs")
 }
