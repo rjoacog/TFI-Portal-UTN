@@ -130,6 +130,7 @@ export interface SheetCell {
   activityId: number;
   submission: 'NONE' | 'ON_TIME' | 'LATE' | 'GRADED';
   grade: number | null;
+  observation: string | null;
   withoutSubmission: boolean;
   approved: boolean | null;
 }
@@ -218,6 +219,7 @@ export async function getSectionSheet(user: AuthUser, sectionId: number): Promis
             activityId: activity.id,
             submission: activity.type === 'ASSESSMENT' && !grade ? 'NONE' : state,
             grade: grade?.value ?? null,
+            observation: grade?.observation ?? null,
             withoutSubmission: grade?.withoutSubmission ?? false,
             approved:
               grade && access.section.passingGrade !== null

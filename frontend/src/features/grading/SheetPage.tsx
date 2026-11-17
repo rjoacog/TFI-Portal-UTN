@@ -16,7 +16,14 @@ interface Sheet {
       lastName: string;
       enrollmentStatus: 'ACTIVE' | 'DROPPED';
       attendance: { label: string };
-      cells: { activityId: number; submission: string; grade: number | null; withoutSubmission: boolean; approved: boolean | null }[];
+      cells: {
+        activityId: number;
+        submission: string;
+        grade: number | null;
+        observation: string | null;
+        withoutSubmission: boolean;
+        approved: boolean | null;
+      }[];
     }[];
   };
 }
@@ -33,18 +40,16 @@ export function SheetPage() {
   const { user } = useSession();
   const sheet = useGet<Sheet>(`/api/sections/${sectionId}/sheet`);
   const [error, setError] = useState<string | null>(null);
-  const [value, setValue] = useState('7');
-  const [observation, setObservation] = useState('');
   if (!sheet.data) return sheet.error ? <p className="banner banner--error">{sheet.error}</p> : <LoadingIndicator />;
   const data = sheet.data.sheet;
 
-  async function grade(activityId: number, userId: number) {
+  async function grade(activityId: number, userId: number, value: number, observation: string) {
     setError(null);
     try {
       await api.put(`/api/activities/${activityId}/grade`, {
         userId,
-        value: Number(value),
-        observation: observation || undefined,
+        value,
+        observation: observation.trim() || undefined,
       });
       sheet.reload();
     } catch (err) {
@@ -87,18 +92,6 @@ export function SheetPage() {
           </button>
         </form>
       )}
-      {user?.role === 'TEACHER' && (
-        <div className="row">
-          <label className="field">
-            Nota a cargar
-            <input value={value} onChange={(event) => setValue(event.target.value)} type="number" min={1} max={10} />
-          </label>
-          <label className="field">
-            Observación
-            <input value={observation} onChange={(event) => setObservation(event.target.value)} />
-          </label>
-        </div>
-      )}
       <div className="table-wrap">
         <table className="table">
           <thead>
@@ -126,10 +119,14 @@ export function SheetPage() {
                       {cell.withoutSubmission ? ' sin entrega' : ''}
                       {cell.approved === null ? '' : cell.approved ? ' · aprobada' : ' · no aprobada'}
                     </div>
+                    {cell.observation && <div className="muted">{cell.observation}</div>}
                     {user?.role === 'TEACHER' && (
-                      <button type="button" className="button button--secondary" onClick={() => void grade(cell.activityId, row.userId)}>
-                        {cell.grade === null ? 'Calificar' : 'Rectificar'}
-                      </button>
+                      <GradeFields
+                        key={`${cell.activityId}-${cell.grade ?? 'x'}-${cell.observation ?? ''}`}
+                        grade={cell.grade}
+                        observation={cell.observation}
+                        onSave={(value, observation) => grade(cell.activityId, row.userId, value, observation)}
+                      />
                     )}
                   </td>
                 ))}
@@ -139,5 +136,42 @@ export function SheetPage() {
         </table>
       </div>
     </section>
+  );
+}
+
+function GradeFields({
+  grade,
+  observation,
+  onSave,
+}: {
+  grade: number | null;
+  observation: string | null;
+  onSave: (value: number, observation: string) => Promise<void>;
+}) {
+  const [value, setValue] = useState(grade === null ? '7' : String(grade));
+  const [note, setNote] = useState(observation ?? '');
+
+  return (
+    <form
+      className="stack"
+      onSubmit={(event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const parsed = Number(value);
+        if (!Number.isInteger(parsed) || parsed < 1 || parsed > 10) return;
+        void onSave(parsed, note);
+      }}
+    >
+      <label className="field">
+        Nota
+        <input value={value} onChange={(event) => setValue(event.target.value)} type="number" min={1} max={10} required />
+      </label>
+      <label className="field">
+        Observación
+        <input value={note} onChange={(event) => setNote(event.target.value)} />
+      </label>
+      <button className="button button--secondary" type="submit">
+        {grade === null ? 'Calificar' : 'Rectificar'}
+      </button>
+    </form>
   );
 }

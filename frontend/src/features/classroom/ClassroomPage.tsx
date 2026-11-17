@@ -46,13 +46,15 @@ export function ClassroomPage() {
   const classroom = useGet<ClassroomResponse>(`/api/sections/${sectionId}/classroom`);
   const [error, setError] = useState<string | null>(null);
 
-  async function run(action: () => Promise<void>) {
+  async function run(action: () => Promise<void>): Promise<boolean> {
     setError(null);
     try {
       await action();
       classroom.reload();
+      return true;
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Ocurrió un error inesperado.');
+      return false;
     }
   }
 
@@ -385,7 +387,7 @@ function EditBox({
   onSave,
 }: {
   fields: { name: string; label: string; value: string; multiline?: boolean }[];
-  onSave: (form: FormData) => Promise<void>;
+  onSave: (form: FormData) => Promise<boolean>;
 }) {
   const [open, setOpen] = useState(false);
   if (!open) {
@@ -400,7 +402,10 @@ function EditBox({
       className="stack"
       onSubmit={(event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        void onSave(new FormData(event.currentTarget)).then(() => setOpen(false));
+        const form = event.currentTarget;
+        void onSave(new FormData(form)).then((saved) => {
+          if (saved) setOpen(false);
+        });
       }}
     >
       {fields.map((field) => (

@@ -23,6 +23,7 @@ export function HistoryPage() {
       <button type="button" className="button button--secondary" onClick={() => void downloadFile('/api/history.csv', 'historial.csv')}>
         Exportar CSV
       </button>
+      {history.data.history.length === 0 && <p>Todavía no tenés inscripciones.</p>}
       {history.data.history.map((item) => (
         <article className="card" key={item.enrollmentId}>
           <strong>
